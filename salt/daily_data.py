@@ -76,6 +76,7 @@ class DailyData:
 
             # automate data entry for current client (as represented by the current row)
             if self.run_driver:
+                # search with provided client information
                 client_fullname = client_dict['First Name'] + " " + client_dict['Last Name']
                 if client_dict['Client ID']:
                     self.driver.search_client_by_ID(client_dict['Client ID'], client_fullname)
@@ -85,8 +86,11 @@ class DailyData:
                     self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
                 else:
                     print("Not enough client data provided for search")
-                    #TODO: add note to excel sheet
-                self.driver.enter_client_service(client_dict)
+                    #TODO: add note to new excel sheet and move onto next client
+                    continue
+
+                # enter client services for client
+                self.driver.enter_client_services(client_dict['Services'])
 
         if self.list_items:
             print(self.unique_items)
