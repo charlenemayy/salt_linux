@@ -57,7 +57,7 @@ class DailyData:
             service_and_items_dict = {}
 
             services_dict = self.__get_service_totals(row, row_index)
-            items_dict = self.__count_item_totals(row, row_index)
+            items_dict = self.__count_item_totals(row, row_index, services_dict)
             client_dict['Services'] = {**services_dict, **items_dict}
 
             # split name into first and last
@@ -68,9 +68,11 @@ class DailyData:
             # add remaining client info
             client_dict['Client ID'] = row['HMIS ID']
 
-            print(row)
-            print(client_dict)
-            print("-----------------------------")
+            if self.show_output:
+                print()
+                print("Final Dictionary Output:")
+                print(client_dict)
+                print("-----------------------------")
 
             # automate data entry for current client (as represented by the current row)
             if self.run_driver:
@@ -121,9 +123,19 @@ class DailyData:
 
     # Collect total number of items under each category for each client
     # and store all items into a dictionary
-    def __count_item_totals(self, row, row_index):
+    def __count_item_totals(self, row, row_index, services_dict):
         items_dict = {}
         row_items = row['Items']
+
+        if self.show_output:
+            print("Raw Excel Data:")
+            print("SERVICES")
+            print(row['Service'])
+            print("ITEMS")
+            print(row_items)
+            print()
+            print("Processed Item Counts:")
+
         if not isinstance(row_items, float):
             # OPTIONAL: collect all unique keys for items i.e. SHO, TOP, etc.
             if self.list_items:
@@ -131,9 +143,6 @@ class DailyData:
                 for item in li:
                     if item.isalpha():
                         self.unique_items.add(item)
-
-            if self.show_output:
-                print(row_items)
 
             items_string = ""
 
@@ -167,6 +176,12 @@ class DailyData:
                     # get first ':' following item code
                     i = substring.index(':')
                     grooming_count += int(substring[i+2])
+            # add body wash + shampoo for each shower
+            if 'Shower' in services_dict:
+                grooming_count += (services_dict['Shower'] * 2)
+            # add detergent for each laundry run (wash + dry)
+            if 'Laundry' in services_dict:
+                grooming_count += (services_dict['Laundry'] / 2)
             if grooming_count > 0:
                 items_string = (items_string + "Grooming: " + str(grooming_count) + "\n")
                 items_dict['Grooming'] = grooming_count
@@ -208,10 +223,23 @@ class DailyData:
                 items_dict['Bedding'] = bedding_count
             if self.show_output: 
                 print("Bedding: " + str(bedding_count))
-                print("--------------------------------")
 
             # set updated items value to excel sheet
             self.df.at[row_index, 'Items'] = items_string
+        # if there are no items in the item column but in the service column
+        elif (services_dict): 
+            items_string = ""
+            grooming_count = 0
+            if 'Shower' in services_dict:
+                grooming_count += (services_dict['Shower'] * 2)
+            # add detergent for each laundry run (wash + dry)
+            if 'Laundry' in services_dict:
+                grooming_count += (services_dict['Laundry'] / 2)
+            if grooming_count > 0:
+                items_string = (items_string + "Grooming: " + str(grooming_count) + "\n")
+                items_dict['Grooming'] = grooming_count
+            if self.show_output:
+                print("Grooming: " + str(grooming_count))
         else:
             # if 'NaN' value set to empty string
             self.df.at[row_index, 'Items'] = ""
