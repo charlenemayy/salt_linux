@@ -181,7 +181,7 @@ class DailyData:
                 grooming_count += (services_dict['Shower'] * 2)
             # add detergent for each laundry run (wash + dry)
             if 'Laundry' in services_dict:
-                grooming_count += (services_dict['Laundry'] / 2)
+                grooming_count += int(services_dict['Laundry'] / 2)
             if grooming_count > 0:
                 items_string = (items_string + "Grooming: " + str(grooming_count) + "\n")
                 items_dict['Grooming'] = grooming_count
@@ -234,7 +234,7 @@ class DailyData:
                 grooming_count += (services_dict['Shower'] * 2)
             # add detergent for each laundry run (wash + dry)
             if 'Laundry' in services_dict:
-                grooming_count += (services_dict['Laundry'] / 2)
+                grooming_count += int(services_dict['Laundry'] / 2)
             if grooming_count > 0:
                 items_string = (items_string + "Grooming: " + str(grooming_count) + "\n")
                 items_dict['Grooming'] = grooming_count
