@@ -159,10 +159,10 @@ class Driver:
     # Enter client services -- requires that the browser already be on the Client Dashboard page
     def enter_client_services(self, services_dict):
         inner_iframe_id = "TabFrame_2"
-        text_name_id = "1000003947_wp220601446form_Display"
         text_name_xpath = "//span[@id='1000003947_wp220601446form_Display']"
         button_add_new_service_id = "Renderer_1000000216"
         link_services_xpath = ""
+        dropdown_enrollment_id = "1000007089_Renderer"
 
         self.__switch_to_iframe(inner_iframe_id)
 
@@ -189,17 +189,10 @@ class Driver:
 
         # start entering services
         for service in services_dict:
-            print(services_dict)
+            # wait until 'Services' page is fully loaded and 'Add Service Button' is clickable
             self.browser.switch_to.default_content()
             self.__switch_to_iframe(inner_iframe_id)
-
-            # navigate to 'Add Service' page and wait until page is fully loaded and button clickable
-            try:
-                WebDriverWait(self.browser, 30).until(
-                    lambda browser: browser.execute_script('return document.readyState') == 'complete')
-            except Exception as e:
-                print("Error loading Service page")
-                print(e)
+            self.__wait_until_page_fully_loaded('Service')
             try:
                 WebDriverWait(self.browser, 30).until(
                     EC.element_to_be_clickable((By.ID, button_add_new_service_id))
@@ -209,6 +202,23 @@ class Driver:
             except Exception as e:
                 print("Couldn't click 'Add New Service' button")
                 print(e)
+            
+            # wait for 'Add Service' page to be fully loaded
+            self.__wait_until_page_fully_loaded('Add Service')
+            try:
+                WebDriverWait(self.browser, 30).until(
+                    EC.element_to_be_clickable((By.ID, dropdown_enrollment_id))
+                )
+                dropdown_enrollment = self.browser.find_element(By.ID, dropdown_enrollment_id)
+                enrollment_options = [x.text for x in dropdown_enrollment.find_elements(By.TAG_NAME, 'option')]
+                # find best match if string in list contains substring ? 
+            except Exception as e:
+                print("Error clicking 'Enrollment' Dropdown")
+                print(e)
+            # find viable 'enrollment' option in the drop down list
+            # enter corresponding service
+            # enter date of service
+            # enter unit value
 
             # ...
             # click save button
@@ -216,3 +226,11 @@ class Driver:
     # Returns a ratio showing how similar two strings are
     def __similar(self, a, b, min_score):
         return difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio() > min_score
+
+    def __wait_until_page_fully_loaded(self, page_name):
+        try:
+            WebDriverWait(self.browser, 30).until(
+                lambda browser: browser.execute_script('return document.readyState') == 'complete')
+        except Exception as e:
+            print("Error loading" + page_name + " page")
+            print(e)
