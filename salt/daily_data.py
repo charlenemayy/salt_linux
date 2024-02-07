@@ -85,8 +85,7 @@ class DailyData:
         success = True
         # Search by ID
         if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
-            client_fullname = client_dict['First Name'] + " " + client_dict['Last Name']
-            success = self.driver.search_client_by_ID(client_dict['Client ID'], client_fullname)
+            success = self.driver.search_client_by_ID(client_dict['Client ID'], client_dict['First Name'], client_dict['Last Name'])
         # Search by DoB
         elif not isinstance(client_dict['DoB'], float) and client_dict['DoB'] != "":
             success = self.driver.search_client_by_birthdate(client_dict['DoB'], client_dict['First Name'], client_dict['Last Name'])

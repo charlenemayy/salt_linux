@@ -67,7 +67,7 @@ class Driver:
             return False
 
     # Search for a Client by their ID number
-    def search_client_by_ID(self, id, client_name):
+    def search_client_by_ID(self, id, first_name, last_name):
         self.navigate_to_find_client()
 
         field_client_id_id = "1000005942_Renderer"
@@ -99,10 +99,15 @@ class Driver:
                 EC.presence_of_element_located((By.XPATH, label_client_name_xpath))
             )
             dashboard_name = self.browser.find_element(By.XPATH, label_client_name_xpath).text
+            dashboard_first_name = dashboard_name.split(" ", 1)[0]
+            dashboard_last_name = dashboard_name.split(" ", 1)[1]
 
-            # ratio based on the similarity between "David Keene" and "David Cannon" = fail
-            if not self.__similar(dashboard_name, client_name, 0.7):
-                raise
+            # sometimes first and last names are swapped, check both scenarios
+            if self.__similar(dashboard_first_name, first_name, 0.9) and self.__similar(dashboard_last_name, last_name, 0.9):
+                return True
+            # sometimes the first and last names are flipped
+            elif self.__similar(dashboard_first_name, last_name, 0.9) and self.__similar(dashboard_last_name, first_name, 0.9):
+                return True
         except Exception as e:
             print("Couldn't find correct Client Name")
             return False
@@ -153,4 +158,5 @@ class Driver:
     
     # Returns a ratio showing how similar two strings are
     def __similar(self, a, b, min_score):
+        print(difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio())
         return difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio() > min_score
