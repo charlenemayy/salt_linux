@@ -32,14 +32,13 @@ class DailyData:
 
     # Parse each row and process client data
     def read_and_process_data(self):
-        self.__clean_dataframe()
+        self.__clean_dataframe(['Race', 'Ethnicity', 'Verification of homeless', 'Gross monthly income'], 
+                               ['', 'HMIS ID', 'Client Name', 'Service', 'Items', 'DoB'])
         # add new column combining items and services columns
-        # self.df.insert(len(self.df.columns)-1, "Services", [])
         self.df['Services'] = ""
         for row_index in range(0, len(self.df)):
             # build dictionary datatype for client to pass into automation
             client_dict = {}
-
             row = self.df.iloc[row_index]
 
             # rearrange birthday and update row
@@ -73,51 +72,51 @@ class DailyData:
 
             # automate data entry for current client (as represented by the current row)
             if self.run_driver:
-                success = True
-                # Search by ID
-                if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
-                    client_fullname = client_dict['First Name'] + " " + client_dict['Last Name']
-                    success = self.driver.search_client_by_ID(client_dict['Client ID'], client_fullname)
-                # Search by DoB
-                elif not isinstance(client_dict['DoB'], float) and client_dict['DoB'] != "":
-                    success = self.driver.search_client_by_birthdate(client_dict['DoB'], client_dict['First Name'], client_dict['Last Name'])
-                # Search by Name
-                elif (not isinstance(client_dict['First Name'], float)
-                    and not isinstance(client_dict['Last Name'], float)
-                    and (client_dict['First Name'] != "" and client_dict['Last Name'] != "")):
-                    #TODO: search by client name
-                    # success = self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
-                    print("TODO")
-                # Lack of Info
-                else:
-                    print("Not enough data provided to search for client:")
-                    print(client_dict)
-                    self.__append_row_to_new_df(client_dict)
-                    continue
-
-                if not success:
-                    print("Client could not be entered into the system:")
-                    print(client_dict)
-                    self.__append_row_to_new_df(client_dict)
-                    continue
-
-                # enter client services for client
-                self.driver.enter_client_services(client_dict['Services'])
-
-        # Make data more readable for manual data entry
-        self.df = self.df.drop(['Service', 'Items'], axis=1)
-        reorder = ['', 'HMIS ID', 'Client Name', 'Services', 'DoB']
-        self.df = self.df.reindex(columns=reorder)
+                self.__automate_service_entry(client_dict)
+        # For Loop End
 
         if self.list_items:
             print(self.unique_items)
 
-    # TODO: make this reusable
-    # TODO: put automation logic in its own function
+        # Make data more readable for manual data entry
+        self.__clean_dataframe(['Service', 'Items'], ['', 'HMIS ID', 'Client Name', 'Services', 'DoB'])
+
+    def __automate_service_entry(self, client_dict):
+        success = True
+        # Search by ID
+        if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
+            client_fullname = client_dict['First Name'] + " " + client_dict['Last Name']
+            success = self.driver.search_client_by_ID(client_dict['Client ID'], client_fullname)
+        # Search by DoB
+        elif not isinstance(client_dict['DoB'], float) and client_dict['DoB'] != "":
+            success = self.driver.search_client_by_birthdate(client_dict['DoB'], client_dict['First Name'], client_dict['Last Name'])
+        # Search by Name
+        elif (not isinstance(client_dict['First Name'], float)
+            and not isinstance(client_dict['Last Name'], float)
+            and (client_dict['First Name'] != "" and client_dict['Last Name'] != "")):
+            #TODO: search by client name
+            # success = self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
+            print("TODO")
+        # Lack of Info
+        else:
+            print("Not enough data provided to search for client:")
+            print(client_dict)
+            self.__append_row_to_new_df(client_dict)
+            return
+
+        if not success:
+            print("Client could not be entered into the system:")
+            print(client_dict)
+            self.__append_row_to_new_df(client_dict)
+            return
+
+        # enter client services for client
+        self.driver.enter_client_services(client_dict['Services'])
+
     # Remove unecessary columns and reorganize for easier entry
-    def __clean_dataframe(self):
-        self.df = self.df.drop(columns=['Race', 'Ethnicity', 'Verification of homeless', 'Gross monthly income'], axis=1)
-        reorder = ['', 'HMIS ID', 'Client Name', 'Service', 'Items', 'DoB']
+    def __clean_dataframe(self, drop_columns, reorder_columns):
+        self.df = self.df.drop(columns=drop_columns, axis=1)
+        reorder = reorder_columns
         self.df = self.df.reindex(columns=reorder)
 
     # Convert row values to proper data types and return a dictionary
