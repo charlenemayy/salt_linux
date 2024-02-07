@@ -30,15 +30,12 @@ class DailyData:
             self.driver.open_clienttrack()
             self.driver.login_clienttrack(DailyData.username, DailyData.password)
 
-    # Remove unecessary columns and reorganize for easier entry
-    def clean_data(self):
-        self.df = self.df.drop(columns=['Race', 'Ethnicity', 'Verification of homeless', 'Gross monthly income'], axis=1)
-        reorder = ['', 'HMIS ID', 'Client Name', 'Service', 'Items', 'DoB']
-        self.df = self.df.reindex(columns=reorder)
-
-    # Parse each row (panda series data type) and collect item totals,
-    # reorganize birth dates and enter data into clienttrack
-    def read_and_enter_data(self):
+    # Parse each row and process client data
+    def read_and_process_data(self):
+        self.__clean_dataframe()
+        # add new column combining items and services columns
+        # self.df.insert(len(self.df.columns)-1, "Services", [])
+        self.df['Services'] = ""
         for row_index in range(0, len(self.df)):
             # build dictionary datatype for client to pass into automation
             client_dict = {}
@@ -49,14 +46,16 @@ class DailyData:
             date = row['DoB']
             day = date[0:3]
             month = date[3:6]
-            result = month + day + date[6:(len(date))]
-            self.df.at[row_index, 'DoB'] = result
-            client_dict['DoB'] = result
+            client_dict['DoB'] = month + day + date[6:(len(date))]
+            # update sheet for readability
+            self.df.at[row_index, 'DoB'] = client_dict['DoB']
 
             # get total number of services and items
             services_dict = self.__get_service_totals(row, row_index)
             items_dict = self.__count_item_totals(row, row_index, services_dict)
             client_dict['Services'] = {**services_dict, **items_dict}
+            # update sheet for readability
+            self.df.at[row_index, 'Services'] = self.__clean_dictionary_string(str(client_dict['Services']))
 
             # split name into first and last
             string_list = row['Client Name'].split(' ', 1)
@@ -65,7 +64,6 @@ class DailyData:
 
             # add remaining client info
             client_dict['Client ID'] = row['HMIS ID']
-
 
             if self.show_output:
                 print()
@@ -106,15 +104,28 @@ class DailyData:
                 # enter client services for client
                 self.driver.enter_client_services(client_dict['Services'])
 
+        # Make data more readable for manual data entry
+        self.df = self.df.drop(['Service', 'Items'], axis=1)
+        reorder = ['', 'HMIS ID', 'Client Name', 'Services', 'DoB']
+        self.df = self.df.reindex(columns=reorder)
+
         if self.list_items:
             print(self.unique_items)
-    
+
+    # TODO: make this reusable
+    # TODO: put automation logic in its own function
+    # Remove unecessary columns and reorganize for easier entry
+    def __clean_dataframe(self):
+        self.df = self.df.drop(columns=['Race', 'Ethnicity', 'Verification of homeless', 'Gross monthly income'], axis=1)
+        reorder = ['', 'HMIS ID', 'Client Name', 'Service', 'Items', 'DoB']
+        self.df = self.df.reindex(columns=reorder)
+
     # Convert row values to proper data types and return a dictionary
     def __get_service_totals(self, row, row_index):
         services_dict = {}
 
         if isinstance(row['Service'], float):
-            self.df.at[row_index, 'Service'] = ""
+            return services_dict
         else:
             index = row['Service'].find('Shower')
             if index >= 0:
@@ -241,10 +252,7 @@ class DailyData:
                 items_dict['Bedding'] = bedding_count
             if self.show_output: 
                 print("Bedding: " + str(bedding_count))
-
-            # set updated items value to excel sheet
-            self.df.at[row_index, 'Items'] = items_string
-        # if there are no items in the item column but in the service column
+        # if there are no items in the item column but the service column is not empty
         elif (services_dict): 
             items_string = ""
             grooming_count = 0
@@ -258,20 +266,13 @@ class DailyData:
                 items_dict['Grooming'] = grooming_count
             if self.show_output:
                 print("Grooming: " + str(grooming_count))
-        else:
-            # if 'NaN' value set to empty string
-            self.df.at[row_index, 'Items'] = ""
 
         return items_dict
     
     # Append client row to new excel sheet output
     def __append_row_to_new_df(self, client_dict):
         # clean dict of services for readability
-        new_string = str(client_dict['Services'])
-        rep = {"{" : "", "}" : "", ", " : "\n"}
-        rep = dict((re.escape(k), v) for k, v in rep.items())
-        pattern = re.compile("|".join(rep.keys()))
-        new_string = pattern.sub(lambda m: rep[re.escape(m.group(0))], new_string)
+        new_string = self.__clean_dictionary_string(str(client_dict['Services']))
         client_dict['Services'] = [new_string]
 
         #TODO: test dropping of unnecessary first and last name columns
@@ -281,18 +282,14 @@ class DailyData:
         del client_dict['First Name']
         del client_dict['Last Name']
         '''
-
         self.new_df = pd.concat([self.new_df, pd.DataFrame(client_dict)], ignore_index=True)
-
-
-    # Make data more readable for manual data entry
-    def combine_service_and_item_columns(self):
-        # combine service columns into one
-        self.df['Services'] = self.df['Service'].astype(str) + self.df['Items'].astype(str)
-        self.df = self.df.drop(['Service', 'Items'], axis=1)
-        reorder = ['', 'HMIS ID', 'Client Name', 'Services', 'DoB']
-        self.df = self.df.reindex(columns=reorder)
-
+    
+    # Make dictionary string more readable
+    def __clean_dictionary_string(self, string):
+        rep = {"{" : "", "}" : "", ", " : "\n"}
+        rep = dict((re.escape(k), v) for k, v in rep.items())
+        pattern = re.compile("|".join(rep.keys()))
+        return pattern.sub(lambda m: rep[re.escape(m.group(0))], string)
 
     # Export data to new spreadsheet in output folder
     def export_data(self, filename, output_path):

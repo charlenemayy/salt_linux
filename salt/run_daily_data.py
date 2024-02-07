@@ -24,7 +24,5 @@ df = pd.read_excel(io=args.filename,
                             'Items': object})
 
 dd = daily_data.DailyData(df, args.rundriver, args.output, args.listitems)
-dd.clean_data()
-dd.read_and_enter_data()
-dd.combine_service_and_item_columns()
+dd.read_and_process_data()
 dd.export_data(args.filename, "~/Desktop/SALT/output/")
