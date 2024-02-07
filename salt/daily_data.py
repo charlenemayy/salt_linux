@@ -1,6 +1,7 @@
-import re
 from datetime import datetime
+import re
 import automation_driver
+import pandas as pd
 
 class DailyData:
     # Item Keys
@@ -14,16 +15,15 @@ class DailyData:
     username = "charlene@saltoutreach.org"
     password = "1ntsygtmtir!CL"
 
-    # Enrollment Codes
-    enroll_orl_street_code = "255537" #value
-    enroll_orn_street_code = "234901" # lol jk it changes all the time
-
     def __init__(self, df, run_driver, show_output, list_items):
         self.df = df
         self.run_driver = run_driver
         self.show_output = show_output
         self.list_items = list_items
         self.unique_items = set()
+
+        # create new dataframe to put clients in that could not be entered automatically
+        self.new_df = pd.DataFrame()
                 
         if self.run_driver:
             self.driver = automation_driver.Driver()
@@ -54,19 +54,18 @@ class DailyData:
             client_dict['DoB'] = result
 
             # get total number of services and items
-            service_and_items_dict = {}
-
             services_dict = self.__get_service_totals(row, row_index)
             items_dict = self.__count_item_totals(row, row_index, services_dict)
             client_dict['Services'] = {**services_dict, **items_dict}
 
             # split name into first and last
-            string_list = row['Client Name'].split(' ')
+            string_list = row['Client Name'].split(' ', 1)
             client_dict['First Name'] = string_list[1]
             client_dict['Last Name'] = string_list[0]
 
             # add remaining client info
             client_dict['Client ID'] = row['HMIS ID']
+
 
             if self.show_output:
                 print()
@@ -88,15 +87,20 @@ class DailyData:
                 elif (not isinstance(client_dict['First Name'], float)
                     and not isinstance(client_dict['Last Name'], float)
                     and (client_dict['First Name'] != "" and client_dict['Last Name'] != "")):
-                    success = self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
+                    #TODO: search by client name
+                    # success = self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
+                    print("TODO")
                 # Lack of Info
                 else:
-                    print("Not enough client data provided for search")
-                    #TODO: add note to new excel sheet and move onto next client
+                    print("Not enough data provided to search for client:")
+                    print(client_dict)
+                    self.__append_row_to_new_df(client_dict)
                     continue
 
                 if not success:
-                    #TODO: add note to new excel sheet and move onto next client
+                    print("Client could not be entered into the system:")
+                    print(client_dict)
+                    self.__append_row_to_new_df(client_dict)
                     continue
 
                 # enter client services for client
@@ -259,6 +263,27 @@ class DailyData:
             self.df.at[row_index, 'Items'] = ""
 
         return items_dict
+    
+    # Append client row to new excel sheet output
+    def __append_row_to_new_df(self, client_dict):
+        # clean dict of services for readability
+        new_string = str(client_dict['Services'])
+        rep = {"{" : "", "}" : "", ", " : "\n"}
+        rep = dict((re.escape(k), v) for k, v in rep.items())
+        pattern = re.compile("|".join(rep.keys()))
+        new_string = pattern.sub(lambda m: rep[re.escape(m.group(0))], new_string)
+        client_dict['Services'] = [new_string]
+
+        #TODO: test dropping of unnecessary first and last name columns
+        '''
+        # combine first and last name into one column
+        client_dict['Name'] = client_dict['First Name'] + " " + client_dict['Last Name']
+        del client_dict['First Name']
+        del client_dict['Last Name']
+        '''
+
+        self.new_df = pd.concat([self.new_df, pd.DataFrame(client_dict)], ignore_index=True)
+
 
     # Make data more readable for manual data entry
     def combine_service_and_item_columns(self):
@@ -276,3 +301,6 @@ class DailyData:
         date = datetime.strptime(date_string[0], '%m-%d-%Y')
         output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
         self.df.to_excel(output_path + output_name + ".xlsx", sheet_name=output_name)
+
+        # create sheet for remaining clients that need to be entered and could not be automated
+        self.new_df.to_excel(output_path + output_name + " (Enter).xlsx", sheet_name = output_name + " (Enter)")
