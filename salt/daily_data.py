@@ -76,16 +76,26 @@ class DailyData:
 
             # automate data entry for current client (as represented by the current row)
             if self.run_driver:
-                # search with provided client information
-                client_fullname = client_dict['First Name'] + " " + client_dict['Last Name']
-                if client_dict['Client ID']:
-                    self.driver.search_client_by_ID(client_dict['Client ID'], client_fullname)
-                elif client_dict['DoB']:
-                    self.driver.search_client_by_birthdate(client_dict['DoB'].replace("-", ""))
-                elif client_dict['First Name'] and client_dict['Last Name']:
-                    self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
+                success = True
+                # Search by ID
+                if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
+                    client_fullname = client_dict['First Name'] + " " + client_dict['Last Name']
+                    success = self.driver.search_client_by_ID(client_dict['Client ID'], client_fullname)
+                # Search by DoB
+                elif not isinstance(client_dict['DoB'], float) and client_dict['DoB'] != "":
+                    success = self.driver.search_client_by_birthdate(client_dict['DoB'], client_dict['First Name'], client_dict['Last Name'])
+                # Search by Name
+                elif (not isinstance(client_dict['First Name'], float)
+                    and not isinstance(client_dict['Last Name'], float)
+                    and (client_dict['First Name'] != "" and client_dict['Last Name'] != "")):
+                    success = self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
+                # Lack of Info
                 else:
                     print("Not enough client data provided for search")
+                    #TODO: add note to new excel sheet and move onto next client
+                    continue
+
+                if not success:
                     #TODO: add note to new excel sheet and move onto next client
                     continue
 
