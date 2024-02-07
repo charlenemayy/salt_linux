@@ -15,17 +15,18 @@ class DailyData:
     username = "charlene@saltoutreach.org"
     password = "1ntsygtmtir!CL"
 
-    def __init__(self, df, run_driver, show_output, list_items):
+    def __init__(self, df, automate, manual, show_output, list_items):
         self.df = df
-        self.run_driver = run_driver
+        self.automate = automate
+        self.manual = manual
         self.show_output = show_output
         self.list_items = list_items
         self.unique_items = set()
 
-        # create new dataframe to put clients in that could not be entered automatically
-        self.new_df = pd.DataFrame()
+        # on successful automated entry for a client, drop the row from this dataframe
+        self.failed_df = self.df.copy()
                 
-        if self.run_driver:
+        if self.automate:
             self.driver = automation_driver.Driver()
             self.driver.open_clienttrack()
             self.driver.login_clienttrack(DailyData.username, DailyData.password)
@@ -71,8 +72,8 @@ class DailyData:
                 print("-----------------------------")
 
             # automate data entry for current client (as represented by the current row)
-            if self.run_driver:
-                self.__automate_service_entry(client_dict)
+            if self.automate:
+                self.__automate_service_entry(client_dict, row_index)
         # For Loop End
 
         if self.list_items:
@@ -81,7 +82,7 @@ class DailyData:
         # Make data more readable for manual data entry
         self.__clean_dataframe(['Service', 'Items'], ['', 'HMIS ID', 'Client Name', 'Services', 'DoB'])
 
-    def __automate_service_entry(self, client_dict):
+    def __automate_service_entry(self, client_dict, row_index):
         success = True
         # Search by ID
         if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
@@ -100,22 +101,18 @@ class DailyData:
         else:
             print("Not enough data provided to search for client:")
             print(client_dict)
-            #TODO: change this to drop rows from copy of original dataframe 
-            # that way can keep looping and running the program
-            # two files: the cleaned version for manual entry (with all entries) - "TBE" (to be entered) (eventually won't be needed)
-            #             the remaining entries, formatted exactly as the original input file - "FAILED ENTRIES"
-            # eventually change TBE file to only be created when -o flag is put in
-            self.__append_row_to_new_df(client_dict)
             return
 
         if not success:
             print("Client could not be entered into the system:")
             print(client_dict)
-            self.__append_row_to_new_df(client_dict)
             return
 
         # enter client services for client
         self.driver.enter_client_services(client_dict['Services'])
+
+        # remove client from list of failed automated entries
+        # self.failed_df.drop([row_index])
 
     # Remove unecessary columns and reorganize for easier entry
     def __clean_dataframe(self, drop_columns, reorder_columns):
@@ -272,6 +269,7 @@ class DailyData:
 
         return items_dict
     
+    '''
     # Append client row to new excel sheet output
     def __append_row_to_new_df(self, client_dict):
         # clean dict of services for readability
@@ -279,13 +277,12 @@ class DailyData:
         client_dict['Services'] = [new_string]
 
         #TODO: test dropping of unnecessary first and last name columns
-        '''
         # combine first and last name into one column
         client_dict['Name'] = client_dict['First Name'] + " " + client_dict['Last Name']
         del client_dict['First Name']
         del client_dict['Last Name']
-        '''
         self.new_df = pd.concat([self.new_df, pd.DataFrame(client_dict)], ignore_index=True)
+    '''
     
     # Make dictionary string more readable
     def __clean_dictionary_string(self, string):
@@ -294,13 +291,24 @@ class DailyData:
         pattern = re.compile("|".join(rep.keys()))
         return pattern.sub(lambda m: rep[re.escape(m.group(0))], string)
 
-    # Export data to new spreadsheet in output folder
-    def export_data(self, filename, output_path):
+    # Export cleaned and readable spreadsheet for data to be entered manually
+    def export_manual_entry_data(self, filename, output_path):
         # get date from original file and output into new excel sheet
         date_string = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", filename)
         date = datetime.strptime(date_string[0], '%m-%d-%Y')
         output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
+
+        # format: '01 Jan 2024.xlsx'
         self.df.to_excel(output_path + output_name + ".xlsx", sheet_name=output_name)
 
+    # Export a sheet of the failed automated entries in their original format
+    # This way we can keep looping the failed entries and try again
+    def export_failed_automation_data(self, filename, output_path):
+        # get date from original file and output into new excel sheet
+        date_string = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", filename)
+        date = datetime.strptime(date_string[0], '%m-%d-%Y')
+        output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
+
         # create sheet for remaining clients that need to be entered and could not be automated
-        self.new_df.to_excel(output_path + output_name + " (Enter).xlsx", sheet_name = output_name + " (Enter)")
+        self.failed_df.to_excel("Failed Entries Report - " + output_path + output_name + ".xlsx",
+                                sheet_name = "Failed Entries Report - " + output_name)
