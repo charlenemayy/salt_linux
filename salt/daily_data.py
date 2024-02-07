@@ -100,6 +100,11 @@ class DailyData:
         else:
             print("Not enough data provided to search for client:")
             print(client_dict)
+            #TODO: change this to drop rows from copy of original dataframe 
+            # that way can keep looping and running the program
+            # two files: the cleaned version for manual entry (with all entries) - "TBE" (to be entered) (eventually won't be needed)
+            #             the remaining entries, formatted exactly as the original input file - "FAILED ENTRIES"
+            # eventually change TBE file to only be created when -o flag is put in
             self.__append_row_to_new_df(client_dict)
             return
 

@@ -155,8 +155,64 @@ class Driver:
         except Exception as e:
             print("Couldn't find client name among results")
             return False
+
+    # Enter client services -- requires that the browser already be on the Client Dashboard page
+    def enter_client_services(self, services_dict):
+        inner_iframe_id = "TabFrame_2"
+        text_name_id = "1000003947_wp220601446form_Display"
+        text_name_xpath = "//span[@id='1000003947_wp220601446form_Display']"
+        button_add_new_service_id = "Renderer_1000000216"
+        link_services_xpath = ""
+
+        self.__switch_to_iframe(inner_iframe_id)
+
+        # service link xpath requires client's first name (for whatever reason)
+        try:
+            WebDriverWait(self.browser, 30).until(
+                EC.visibility_of_element_located((By.XPATH, text_name_xpath))
+            )
+            name = self.browser.find_element(By.XPATH, text_name_xpath).text
+            first_name = name.split(", ", 1)[1]
+            link_services_xpath = '//a[@title="' + first_name + '\'s Services"]'
+        except Exception as e:
+            print("Couldn't find client first name for Services link")
+            print(e)
+        try:
+            WebDriverWait(self.browser, 30).until(
+                EC.element_to_be_clickable((By.XPATH, link_services_xpath))
+            )
+            link_services = self.browser.find_element(By.XPATH, link_services_xpath)
+            link_services.click()
+        except Exception as e:
+            print("Couldn't click 'Services' link")
+            print(e)
+
+        # start entering services
+        for service in services_dict:
+            print(services_dict)
+            self.browser.switch_to.default_content()
+            self.__switch_to_iframe(inner_iframe_id)
+
+            # navigate to 'Add Service' page and wait until page is fully loaded and button clickable
+            try:
+                WebDriverWait(self.browser, 30).until(
+                    lambda browser: browser.execute_script('return document.readyState') == 'complete')
+            except Exception as e:
+                print("Error loading Service page")
+                print(e)
+            try:
+                WebDriverWait(self.browser, 30).until(
+                    EC.element_to_be_clickable((By.ID, button_add_new_service_id))
+                )
+                button_add_new_service = self.browser.find_element(By.ID, button_add_new_service_id)
+                button_add_new_service.click()
+            except Exception as e:
+                print("Couldn't click 'Add New Service' button")
+                print(e)
+
+            # ...
+            # click save button
     
     # Returns a ratio showing how similar two strings are
     def __similar(self, a, b, min_score):
-        print(difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio())
         return difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio() > min_score
