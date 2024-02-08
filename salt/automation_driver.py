@@ -7,6 +7,9 @@ from selenium.webdriver.support import expected_conditions as EC
 import difflib
 
 class Driver:
+    # Global selectors
+    iframe_id = "TabFrame_2"
+
     def __init__(self):
         chrome_options = Options()
         chrome_options.add_experimental_option("detach", True)
@@ -38,7 +41,6 @@ class Driver:
     def navigate_to_find_client(self):
         button_nav_clients_page_id = "ws_2_tab"
         button_nav_find_clients_page_id = "o1000000037"
-        inner_iframe_id = "TabFrame_2"
 
         # find 'Clients' button on left sidebar
         try:
@@ -54,7 +56,7 @@ class Driver:
         # find 'Find Client' button on left sidebar after waiting for client dashboard to fully load
         try:
             WebDriverWait(self.browser, 30).until(
-                EC.frame_to_be_available_and_switch_to_it((By.ID, inner_iframe_id))
+                EC.frame_to_be_available_and_switch_to_it((By.ID, self.iframe_id))
             ) 
             self.browser.switch_to.default_content()
             WebDriverWait(self.browser, 30).until(
@@ -72,11 +74,10 @@ class Driver:
 
         field_client_id_id = "1000005942_Renderer"
         button_search_id = "Renderer_SEARCH"
-        inner_iframe_id = "TabFrame_2"
         label_client_name_xpath = "//span[@class = 'entity-info-value'][@aria-label = 'Name']"
 
         # enter id into client id field
-        self.__switch_to_iframe(inner_iframe_id)
+        self.__switch_to_iframe(self.iframe_id)
         try:
             WebDriverWait(self.browser, 30).until(
                 EC.element_to_be_clickable((By.ID, field_client_id_id))
@@ -115,12 +116,11 @@ class Driver:
     def search_client_by_birthdate(self, birthdate, first_name, last_name):
         self.navigate_to_find_client()
 
-        inner_iframe_id = "TabFrame_2"
         field_birthdate_id = "1000005939_Renderer"
         button_search_id = "Renderer_SEARCH"
         table_search_results_rows_xpath = "//table[@id='RendererResultSet']//tbody/tr"
 
-        self.__switch_to_iframe(inner_iframe_id)
+        self.__switch_to_iframe(self.iframe_id)
         try:
             WebDriverWait(self.browser, 30).until(
                 EC.element_to_be_clickable((By.ID, field_birthdate_id))
@@ -157,11 +157,10 @@ class Driver:
             return False
     
     def navigate_to_service_entry(self):
-        inner_iframe_id = "TabFrame_2"
         text_name_xpath = "//span[@id='1000003947_wp220601446form_Display']"
         link_services_xpath = ""
 
-        self.__switch_to_iframe(inner_iframe_id)
+        self.__switch_to_iframe(self.iframe_id)
 
         # service link xpath requires client's first name (for whatever reason)
         try:
@@ -188,7 +187,6 @@ class Driver:
     def enter_client_services(self, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
-        inner_iframe_id = "TabFrame_2"
 
         # order matters - from most desirable option to last
         salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
@@ -202,7 +200,7 @@ class Driver:
         for service in services_dict:
             # wait until 'Services' page is fully loaded and 'Add Service Button' is clickable
             self.browser.switch_to.default_content()
-            self.__switch_to_iframe(inner_iframe_id)
+            self.__switch_to_iframe(self.iframe_id)
             self.__wait_until_page_fully_loaded('Service')
             try:
                 WebDriverWait(self.browser, 30).until(
