@@ -24,9 +24,9 @@ df = pd.read_excel(io=args.filename,
                             'Service': object,
                             'Items': object})
 
-dd = daily_data.DailyData(df, args.automate, args.manual, args.output, args.listitems)
+dd = daily_data.DailyData(df, args.filename, args.automate, args.manual, args.output, args.listitems)
 dd.read_and_process_data()
 if args.manual:
-       dd.export_manual_entry_data(args.filename, "~/Desktop/SALT/output/")
+       dd.export_manual_entry_data("~/Desktop/SALT/output/")
 if args.automate:
-       dd.export_failed_automation_data(args.filename, "~/Desktop/SALT/output")
+       dd.export_failed_automation_data("~/Desktop/SALT/output")

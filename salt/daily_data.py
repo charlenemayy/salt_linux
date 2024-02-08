@@ -15,13 +15,14 @@ class DailyData:
     username = "charlene@saltoutreach.org"
     password = "1ntsygtmtir!CL"
 
-    def __init__(self, df, automate, manual, show_output, list_items):
+    def __init__(self, df, filename, automate, manual, show_output, list_items):
         self.df = df
         self.automate = automate
         self.manual = manual
         self.show_output = show_output
         self.list_items = list_items
         self.unique_items = set()
+        self.filename = filename
 
         # on successful automated entry for a client, drop the row from this dataframe
         self.failed_df = self.df.copy()
@@ -108,9 +109,18 @@ class DailyData:
             print(client_dict)
             return
 
-        # enter client services for client
-        self.driver.enter_client_services(client_dict['Services'])
+        # order matters - from most desirable option to last
+        salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
+                                 "SALT Outreach-ORN ESG-CV Street Outreach",
+                                 "SALT Outreach-ORN PSH Supportive Services",
+                                 "SALT Outreach-ORL CDBG Services Only"]
 
+        service_date = self.__get_date_from_filename(self.filename)
+
+        # enter client services for client
+        self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'])
+
+        # TODO:
         # remove client from list of failed automated entries
         # self.failed_df.drop([row_index])
 
@@ -290,12 +300,17 @@ class DailyData:
         rep = dict((re.escape(k), v) for k, v in rep.items())
         pattern = re.compile("|".join(rep.keys()))
         return pattern.sub(lambda m: rep[re.escape(m.group(0))], string)
-
-    # Export cleaned and readable spreadsheet for data to be entered manually
-    def export_manual_entry_data(self, filename, output_path):
-        # get date from original file and output into new excel sheet
+    
+    # Expects to find substring in format MM-DD-YEAR; returns in format MM-DD-YEAR
+    def __get_date_from_filename(self, filename)
         date_string = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", filename)
         date = datetime.strptime(date_string[0], '%m-%d-%Y')
+        return date
+
+    # Export cleaned and readable spreadsheet for data to be entered manually
+    def export_manual_entry_data(self, output_path):
+        # get date from original file and output into new excel sheet
+        date = self.__get_date_from_filename(self.filename)
         output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
 
         # format: '01 Jan 2024.xlsx'
@@ -303,10 +318,9 @@ class DailyData:
 
     # Export a sheet of the failed automated entries in their original format
     # This way we can keep looping the failed entries and try again
-    def export_failed_automation_data(self, filename, output_path):
+    def export_failed_automation_data(self, output_path):
         # get date from original file and output into new excel sheet
-        date_string = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", filename)
-        date = datetime.strptime(date_string[0], '%m-%d-%Y')
+        date = self.__get_date_from_filename(self.filename)
         output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
 
         # create sheet for remaining clients that need to be entered and could not be automated

@@ -184,20 +184,14 @@ class Driver:
             print(e)
 
     # Enter client services -- requires that the browser already be on the Client Dashboard page
-    def enter_client_services(self, services_dict):
+    def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
-
-        # order matters - from most desirable option to last
-        salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
-                                 "SALT Outreach-ORN ESG-CV Street Outreach",
-                                 "SALT Outreach-ORN PSH Supportive Services",
-                                 "SALT Outreach-ORL CDBG Services Only"]
 
         self.navigate_to_service_entry()
 
         # start entering services
-        for service in services_dict:
+        for service, service_count in services_dict.items():
             # wait until 'Services' page is fully loaded and 'Add Service Button' is clickable
             self.browser.switch_to.default_content()
             self.__switch_to_iframe(self.iframe_id)
@@ -221,10 +215,9 @@ class Driver:
                     EC.element_to_be_clickable((By.ID, dropdown_enrollment_id))
                 )
                 dropdown_enrollment = self.browser.find_element(By.ID, dropdown_enrollment_id)
-                #dropdown_options = [x.text for x in dropdown_enrollment.find_elements(By.TAG_NAME, 'option')]
                 enrollment_found = False
                 dropdown_options = dropdown_enrollment.find_elements(By.TAG_NAME, 'option')
-                for salt_enrollment in salt_enrollment_names:
+                for salt_enrollment in viable_enrollment_list:
                     if not enrollment_found:
                         for option in dropdown_options:
                             if salt_enrollment in option.text:
@@ -244,11 +237,10 @@ class Driver:
             except Exception as e:
                 print("Error finding enrollment")
                 print(e)
-            # enter corresponding service
-            # enter date of service
-            # enter unit value
 
-            # ...
+            # enter corresponding service
+            # enter unit value
+            # enter date of service
             # click save button
     
     # Returns a ratio showing how similar two strings are
