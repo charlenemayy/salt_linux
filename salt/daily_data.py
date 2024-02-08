@@ -4,10 +4,10 @@ import automation_driver
 import pandas as pd
 
 class DailyData:
-    # Item Keys
+    # Item Keys - Clothing, Grooming, Food, Bedding
     service_item_codes = ['Shower', 'Laundry']
-    clothing_item_codes = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks']
-    grooming_item_codes = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends']
+    clothing_item_codes = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks']
+    grooming_item_codes = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons']
     food_item_codes = ['SBG']
     bedding_item_codes = ['Blankets']
 

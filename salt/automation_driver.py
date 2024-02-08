@@ -187,6 +187,12 @@ class Driver:
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
+        # the corresponding values that serve as different service codes
+        options_service_values = {'Bible Study' : '690',
+                                  'Bedding' : '538',
+                                  'Clothing' : '526',
+                                  'Grooming' : '530',
+                                  'Food' : '359'}
 
         self.navigate_to_service_entry()
 
@@ -237,8 +243,10 @@ class Driver:
             except Exception as e:
                 print("Error finding enrollment")
                 print(e)
-
             # enter corresponding service
+
+
+        # End of For Loop
             # enter unit value
             # enter date of service
             # click save button
