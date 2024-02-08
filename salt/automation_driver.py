@@ -5,6 +5,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import difflib
+import time
 
 '''
 Responsible for all automation, all the data should be processed and cleaned before
@@ -193,7 +194,7 @@ class Driver:
             print("Couldn't click 'Services' link")
             print(e)
 
-    # Enter all the services associated with current client
+    # Enter all the services associated with current client, service_date must be numeric values only
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
@@ -202,10 +203,16 @@ class Driver:
         # the corresponding values that serve as different service codes
         # these keys should line up with the ones in service_dict
         options_service_values = {'Bible Study' : '690',
+                                  'Shower' : '289',
+                                  'Laundry' : '529',
                                   'Bedding' : '538',
                                   'Clothing' : '526',
                                   'Grooming' : '530',
                                   'Food' : '359'}
+        
+        field_units_id = "1000007095_Renderer"
+        field_date_id = "1000007086_Renderer"
+        button_save_id = "Renderer_SAVE"
 
         self.navigate_to_service_list()
 
@@ -259,17 +266,34 @@ class Driver:
                 print("Error finding enrollment")
                 print(e)
 
-            # enter corresponding service
-            service_code = options_service_values[service]
-            dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_service_id, service_code)
-            option_service = self.browser.find_element(By.XPATH, dropdown_option_xpath)
-            option_service.click()
+            try:
+                # enter corresponding service - added sleep, as filling the form too fast causes it to be incorrect
+                service_code = options_service_values[service]
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_service_id, service_code)
+                option_service = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option_service.click()
+                time.sleep(1)
+            
+                # enter unit value
+                field_units = self.browser.find_element(By.ID, field_units_id)
+                field_units.clear()
+                time.sleep(1)
+                field_units.send_keys(service_count)
+                time.sleep(1)
 
+                # enter date
+                field_date = self.browser.find_element(By.ID, field_date_id)
+                field_date.clear()
+                field_date.send_keys(service_date)
+                time.sleep(1)
 
-        # End of For Loop
-            # enter unit value
-            # enter date of service
-            # click save button
+                # click save button
+                button_save = self.browser.find_element(By.ID, button_save_id)
+                button_save.click()
+            except Exception as e:
+                print("Couldn't enter " + service + " service for client")
+                print(e)
+        # For Loop End
     
     # Returns a ratio showing how similar two strings are
     def __similar(self, a, b, min_score):

@@ -115,9 +115,10 @@ class DailyData:
                                  "SALT Outreach-ORN PSH Supportive Services",
                                  "SALT Outreach-ORL CDBG Services Only"]
 
-        service_date = self.__get_date_from_filename(self.filename)
+        date = self.__get_date_from_filename(self.filename)
+        service_date = str(date.strftime('%m%d%Y'))
 
-        # enter client services for client
+        # enter client services for client - expects date with no non-numeric values (no dashes, etc.)
         self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'])
 
         # TODO:
