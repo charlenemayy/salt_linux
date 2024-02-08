@@ -6,6 +6,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import difflib
 
+'''
+Responsible for all automation, all the data should be processed and cleaned before
+being sent to this class, i.e. by daily_data.py. All pandas and dataframe 
+logic/manipulation should be done outside of this automation class.
+
+I added the selectors to the top of each function in case they are subject to change
+on HMIS' website. 
+'''
 class Driver:
     # Global selectors
     iframe_id = "TabFrame_2"
@@ -68,7 +76,7 @@ class Driver:
             print("Couldn't open 'Find Client' page")
             return False
 
-    # Search for a Client by their ID number
+    # Search for a Client by their ID number and checks that the name is a relative match once found
     def search_client_by_ID(self, id, first_name, last_name):
         self.navigate_to_find_client()
 
@@ -113,6 +121,7 @@ class Driver:
             print("Couldn't find correct Client Name")
             return False
 
+    # Search for client by their birthday and selects their name from a list
     def search_client_by_birthdate(self, birthdate, first_name, last_name):
         self.navigate_to_find_client()
 
@@ -156,7 +165,8 @@ class Driver:
             print("Couldn't find client name among results")
             return False
     
-    def navigate_to_service_entry(self):
+    # Navigates to the list of services page for the client, assumes the browser is at the Client Dashboard
+    def navigate_to_service_list(self):
         text_name_xpath = "//span[@id='1000003947_wp220601446form_Display']"
         link_services_xpath = ""
 
@@ -183,10 +193,11 @@ class Driver:
             print("Couldn't click 'Services' link")
             print(e)
 
-    # Enter client services -- requires that the browser already be on the Client Dashboard page
+    # Enter all the services associated with current client
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
+
         # the corresponding values that serve as different service codes
         options_service_values = {'Bible Study' : '690',
                                   'Bedding' : '538',
@@ -194,7 +205,7 @@ class Driver:
                                   'Grooming' : '530',
                                   'Food' : '359'}
 
-        self.navigate_to_service_entry()
+        self.navigate_to_service_list()
 
         # start entering services
         for service, service_count in services_dict.items():
@@ -243,6 +254,7 @@ class Driver:
             except Exception as e:
                 print("Error finding enrollment")
                 print(e)
+
             # enter corresponding service
 
 
