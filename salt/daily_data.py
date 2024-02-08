@@ -127,7 +127,7 @@ class DailyData:
             return
         # TODO:
         # remove client from list of failed automated entries
-        # self.failed_df.drop([row_index])
+        self.failed_df = self.failed_df.drop([row_index])
 
     # Remove unecessary columns and reorganize for easier entry
     def __clean_dataframe(self, drop_columns, reorder_columns):
@@ -326,8 +326,10 @@ class DailyData:
     def export_failed_automation_data(self, output_path):
         # get date from original file and output into new excel sheet
         date = self.__get_date_from_filename(self.filename)
-        output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
+        output_name = ("Failed Entries - " 
+                       + str(date.strftime('%m')) + '-' 
+                       + str(date.strftime('%d')) + '-' 
+                       + str(date.strftime('%Y')))
 
         # create sheet for remaining clients that need to be entered and could not be automated
-        self.failed_df.to_excel("Failed Entries Report - " + output_path + output_name + ".xlsx",
-                                sheet_name = "Failed Entries Report - " + output_name)
+        self.failed_df.to_excel(output_path + output_name + ".xlsx", sheet_name = "Failed Entries Report - " + output_name)

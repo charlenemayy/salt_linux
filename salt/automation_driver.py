@@ -43,6 +43,7 @@ class Driver:
         button_nav_find_clients_page_id = "o1000000037"
 
         # find 'Clients' button on left sidebar
+        self.browser.switch_to.default_content()
         try:
             WebDriverWait(self.browser, 30).until(
                 EC.element_to_be_clickable((By.ID, button_nav_clients_page_id))
@@ -51,6 +52,7 @@ class Driver:
             button_clients.click()
         except Exception as e:
             print("Couldn't navigate to 'Clients' page")
+            print(e)
             return False
         
         # find 'Find Client' button on left sidebar after waiting for client dashboard to fully load
@@ -66,7 +68,9 @@ class Driver:
             button_find_client.click()
         except Exception as e:
             print("Couldn't open 'Find Client' page")
+            print(e)
             return False
+        return True
 
     # Search for a Client by their ID number and checks that the name is a relative match once found
     def search_client_by_ID(self, id, first_name, last_name):
@@ -90,6 +94,7 @@ class Driver:
             button_search_id.click()
         except Exception as e:
             print("Couldn't find 'Client ID' field")
+            print(e)
             return False
 
         # check that name matches client data and id
@@ -111,7 +116,9 @@ class Driver:
                 return True
         except Exception as e:
             print("Couldn't find correct Client Name")
+            print(e)
             return False
+        return True
 
     # Search for client by their birthday and selects their name from a list
     def search_client_by_birthdate(self, birthdate, first_name, last_name):
@@ -135,6 +142,7 @@ class Driver:
             button_search_id.click()
         except Exception as e:
             print("Couldn't find 'Birth Date' field")
+            print(e)
             return False
 
         try:
@@ -155,27 +163,15 @@ class Driver:
                     break
         except Exception as e:
             print("Couldn't find client name among results")
+            print(e)
             return False
+        return True
     
     # Navigates to the list of services page for the client, assumes the browser is at the Client Dashboard
     def navigate_to_service_list(self):
-        text_name_xpath = "//span[@id='1000003947_wp220601446form_Display']"
-        link_services_xpath = ""
+        link_services_xpath = '//td[@class="Header ZoneMiddleRight_2"]//a'
 
         self.__switch_to_iframe(self.iframe_id)
-
-        # service link xpath requires client's first name (for whatever reason)
-        try:
-            WebDriverWait(self.browser, 30).until(
-                EC.visibility_of_element_located((By.XPATH, text_name_xpath))
-            )
-            name = self.browser.find_element(By.XPATH, text_name_xpath).text
-            first_name = name.split(", ", 1)[1]
-            link_services_xpath = '//a[@title="' + first_name + '\'s Services"]'
-        except Exception as e:
-            print("Couldn't find client first name for Services link")
-            print(e)
-            return False
         try:
             WebDriverWait(self.browser, 30).until(
                 EC.element_to_be_clickable((By.XPATH, link_services_xpath))
@@ -186,6 +182,7 @@ class Driver:
             print("Couldn't click 'Services' link")
             print(e)
             return False
+        return True
 
     # Enter all the services associated with current client, service_date must be numeric values only
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
@@ -313,4 +310,5 @@ class Driver:
             )
         except Exception as e:
             print("Couldn't focus on iframe")
+            print(e)
     

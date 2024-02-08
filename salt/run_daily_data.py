@@ -29,4 +29,4 @@ dd.read_and_process_data()
 if args.manual:
        dd.export_manual_entry_data("~/Desktop/SALT/output/")
 if args.automate:
-       dd.export_failed_automation_data("~/Desktop/SALT/output")
+       dd.export_failed_automation_data("~/Desktop/SALT/output/")
