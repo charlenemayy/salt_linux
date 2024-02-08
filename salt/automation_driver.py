@@ -197,8 +197,10 @@ class Driver:
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
+        dropdown_service_id = "1000007094_Renderer"
 
         # the corresponding values that serve as different service codes
+        # these keys should line up with the ones in service_dict
         options_service_values = {'Bible Study' : '690',
                                   'Bedding' : '538',
                                   'Clothing' : '526',
@@ -232,8 +234,9 @@ class Driver:
                     EC.element_to_be_clickable((By.ID, dropdown_enrollment_id))
                 )
                 dropdown_enrollment = self.browser.find_element(By.ID, dropdown_enrollment_id)
-                enrollment_found = False
                 dropdown_options = dropdown_enrollment.find_elements(By.TAG_NAME, 'option')
+
+                enrollment_found = False
                 for salt_enrollment in viable_enrollment_list:
                     if not enrollment_found:
                         for option in dropdown_options:
@@ -244,7 +247,8 @@ class Driver:
                 if not enrollment_found:
                     raise
                     # TODO: develop enroll client automation
-                    # enroll the client and try again
+                    # enroll the client and try again, enrollment should 
+                    # be found in recursive call
                     '''
                     self.enroll_client()
                     self.navigate_to_client_dashboard()
@@ -256,6 +260,10 @@ class Driver:
                 print(e)
 
             # enter corresponding service
+            service_code = options_service_values[service]
+            dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_service_id, service_code)
+            option_service = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+            option_service.click()
 
 
         # End of For Loop
