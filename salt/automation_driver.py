@@ -171,6 +171,7 @@ class Driver:
     def navigate_to_service_list(self):
         link_services_xpath = '//td[@class="Header ZoneMiddleRight_2"]//a'
 
+        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         try:
             WebDriverWait(self.browser, 30).until(
