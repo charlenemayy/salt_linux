@@ -302,7 +302,7 @@ class DailyData:
         return pattern.sub(lambda m: rep[re.escape(m.group(0))], string)
     
     # Expects to find substring in format MM-DD-YEAR; returns in format MM-DD-YEAR
-    def __get_date_from_filename(self, filename)
+    def __get_date_from_filename(self, filename):
         date_string = re.search("([0-9]{2}\-[0-9]{2}\-[0-9]{4})", filename)
         date = datetime.strptime(date_string[0], '%m-%d-%Y')
         return date
