@@ -155,14 +155,11 @@ class Driver:
         except Exception as e:
             print("Couldn't find client name among results")
             return False
-
-    # Enter client services -- requires that the browser already be on the Client Dashboard page
-    def enter_client_services(self, services_dict):
+    
+    def navigate_to_service_entry(self):
         inner_iframe_id = "TabFrame_2"
         text_name_xpath = "//span[@id='1000003947_wp220601446form_Display']"
-        button_add_new_service_id = "Renderer_1000000216"
         link_services_xpath = ""
-        dropdown_enrollment_id = "1000007089_Renderer"
 
         self.__switch_to_iframe(inner_iframe_id)
 
@@ -187,6 +184,20 @@ class Driver:
             print("Couldn't click 'Services' link")
             print(e)
 
+    # Enter client services -- requires that the browser already be on the Client Dashboard page
+    def enter_client_services(self, services_dict):
+        button_add_new_service_id = "Renderer_1000000216"
+        dropdown_enrollment_id = "1000007089_Renderer"
+        inner_iframe_id = "TabFrame_2"
+
+        # order matters - from most desirable option to last
+        salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
+                                 "SALT Outreach-ORN ESG-CV Street Outreach",
+                                 "SALT Outreach-ORN PSH Supportive Services",
+                                 "SALT Outreach-ORL CDBG Services Only"]
+
+        self.navigate_to_service_entry()
+
         # start entering services
         for service in services_dict:
             # wait until 'Services' page is fully loaded and 'Add Service Button' is clickable
@@ -205,17 +216,36 @@ class Driver:
             
             # wait for 'Add Service' page to be fully loaded
             self.__wait_until_page_fully_loaded('Add Service')
+
+            # find viable 'enrollment' option in the drop down list
             try:
                 WebDriverWait(self.browser, 30).until(
                     EC.element_to_be_clickable((By.ID, dropdown_enrollment_id))
                 )
                 dropdown_enrollment = self.browser.find_element(By.ID, dropdown_enrollment_id)
-                enrollment_options = [x.text for x in dropdown_enrollment.find_elements(By.TAG_NAME, 'option')]
-                # find best match if string in list contains substring ? 
+                #dropdown_options = [x.text for x in dropdown_enrollment.find_elements(By.TAG_NAME, 'option')]
+                enrollment_found = False
+                dropdown_options = dropdown_enrollment.find_elements(By.TAG_NAME, 'option')
+                for salt_enrollment in salt_enrollment_names:
+                    if not enrollment_found:
+                        for option in dropdown_options:
+                            if salt_enrollment in option.text:
+                                option.click()
+                                enrollment_found = True
+                                break
+                if not enrollment_found:
+                    raise
+                    # TODO: develop enroll client automation
+                    # enroll the client and try again
+                    '''
+                    self.enroll_client()
+                    self.navigate_to_client_dashboard()
+                    self.enter_client_services()
+                    return
+                    '''
             except Exception as e:
-                print("Error clicking 'Enrollment' Dropdown")
+                print("Error finding enrollment")
                 print(e)
-            # find viable 'enrollment' option in the drop down list
             # enter corresponding service
             # enter date of service
             # enter unit value
