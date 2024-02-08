@@ -37,15 +37,6 @@ class Driver:
         field_password.send_keys(password)
         field_password.send_keys(Keys.RETURN)
     
-    # Focus on iframe with given ID
-    def __switch_to_iframe(self, iframe_id):
-        try:
-            WebDriverWait(self.browser, 30).until(
-                EC.frame_to_be_available_and_switch_to_it((By.ID, iframe_id))
-            )
-        except Exception as e:
-            print("Couldn't focus on iframe")
-    
     # Navigate to 'Find Client' page
     def navigate_to_find_client(self):
         button_nav_clients_page_id = "ws_2_tab"
@@ -184,6 +175,7 @@ class Driver:
         except Exception as e:
             print("Couldn't find client first name for Services link")
             print(e)
+            return False
         try:
             WebDriverWait(self.browser, 30).until(
                 EC.element_to_be_clickable((By.XPATH, link_services_xpath))
@@ -193,6 +185,7 @@ class Driver:
         except Exception as e:
             print("Couldn't click 'Services' link")
             print(e)
+            return False
 
     # Enter all the services associated with current client, service_date must be numeric values only
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
@@ -231,6 +224,7 @@ class Driver:
             except Exception as e:
                 print("Couldn't click 'Add New Service' button")
                 print(e)
+                return False
             
             # wait for 'Add Service' page to be fully loaded
             self.__wait_until_page_fully_loaded('Add Service')
@@ -265,6 +259,7 @@ class Driver:
             except Exception as e:
                 print("Error finding enrollment")
                 print(e)
+                return False
 
             try:
                 # enter corresponding service - added sleep, as filling the form too fast causes it to be incorrect
@@ -293,12 +288,15 @@ class Driver:
             except Exception as e:
                 print("Couldn't enter " + service + " service for client")
                 print(e)
-        # For Loop End
+                return False
+        # For Loop End - Success!
+        return True
     
     # Returns a ratio showing how similar two strings are
     def __similar(self, a, b, min_score):
         return difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio() > min_score
 
+    # Waits until a page is fully loaded before continuing
     def __wait_until_page_fully_loaded(self, page_name):
         try:
             WebDriverWait(self.browser, 30).until(
@@ -306,3 +304,13 @@ class Driver:
         except Exception as e:
             print("Error loading" + page_name + " page")
             print(e)
+
+    # Focus on iframe with given ID
+    def __switch_to_iframe(self, iframe_id):
+        try:
+            WebDriverWait(self.browser, 30).until(
+                EC.frame_to_be_available_and_switch_to_it((By.ID, iframe_id))
+            )
+        except Exception as e:
+            print("Couldn't focus on iframe")
+    

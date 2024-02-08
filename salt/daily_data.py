@@ -84,7 +84,8 @@ class DailyData:
         self.__clean_dataframe(['Service', 'Items'], ['', 'HMIS ID', 'Client Name', 'Services', 'DoB'])
 
     def __automate_service_entry(self, client_dict, row_index):
-        success = True
+        success = False
+        # STEP ONE: SEARCH FOR CLIENT
         # Search by ID
         if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
             success = self.driver.search_client_by_ID(client_dict['Client ID'], client_dict['First Name'], client_dict['Last Name'])
@@ -105,22 +106,25 @@ class DailyData:
             return
 
         if not success:
-            print("Client could not be entered into the system:")
+            print("Client could not be found in the system:")
             print(client_dict)
             return
-
+        
+        # STEP TWO: ENTER SERVICES FOR CLIENT
         # order matters - from most desirable option to last
         salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
                                  "SALT Outreach-ORN ESG-CV Street Outreach",
                                  "SALT Outreach-ORN PSH Supportive Services",
                                  "SALT Outreach-ORL CDBG Services Only"]
-
         date = self.__get_date_from_filename(self.filename)
         service_date = str(date.strftime('%m%d%Y'))
 
         # enter client services for client - expects date with no non-numeric values (no dashes, etc.)
-        self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'])
-
+        success = self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'])
+        if not success:
+            print("Client services could not be entered into the system:")
+            print(client_dict)
+            return
         # TODO:
         # remove client from list of failed automated entries
         # self.failed_df.drop([row_index])
