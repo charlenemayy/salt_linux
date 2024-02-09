@@ -111,25 +111,26 @@ class Driver:
             dashboard_name = dashboard_title.split("'s")[0]
             dashboard_first_name = dashboard_name.split(" ", 1)[0]
             dashboard_last_name = dashboard_name.split(" ", 1)[1]
-            print("Gathered Name: " + dashboard_first_name, dashboard_last_name)
 
             # calculate similarity score of the name on the dashboard and our clients name
-            min_score = 1.55
+            min_score = 0.85
             first_name_score = self.__similar(dashboard_first_name, first_name)
             last_name_score = self.__similar(dashboard_last_name, last_name) 
-            final_score = first_name_score + last_name_score
-            if final_score >= min_score:
+            final_score_one = first_name_score + last_name_score
+            if final_score_one >= min_score:
                 return True
 
             # sometimes first and last names are swapped, check both scenarios
             first_name_score = self.__similar(dashboard_first_name, last_name)
             last_name_score = self.__similar(dashboard_last_name, first_name) 
-            final_score = first_name_score + last_name_score
+            final_score_two = first_name_score + last_name_score
 
-            if final_score >= min_score:
+            if final_score_two >= min_score:
                 return True
 
             print("Client Name is not a match")
+            print("Loaded Client: " + dashboard_first_name, dashboard_last_name)
+            print("Similarity Scores: ", final_score_one, final_score_two)
             return False
         except Exception as e:
             print("Couldn't find correct Client Name")
@@ -351,7 +352,4 @@ class Driver:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.frame_to_be_available_and_switch_to_it((By.ID, iframe_id))
             )
-        except Exception as e:
-            print("Couldn't focus on iframe")
-            print(e)
-    
+        exc

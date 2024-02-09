@@ -120,7 +120,6 @@ class DailyData:
             print("Client services could not be entered into the system:")
             print(client_dict)
             return
-        # TODO:
         # remove client from list of failed automated entries
         self.failed_df = self.failed_df.drop([row_index])
 
@@ -278,21 +277,6 @@ class DailyData:
                 print("Grooming: " + str(grooming_count))
 
         return items_dict
-    
-    '''
-    # Append client row to new excel sheet output
-    def __append_row_to_new_df(self, client_dict):
-        # clean dict of services for readability
-        new_string = self.__clean_dictionary_string(str(client_dict['Services']))
-        client_dict['Services'] = [new_string]
-
-        #TODO: test dropping of unnecessary first and last name columns
-        # combine first and last name into one column
-        client_dict['Name'] = client_dict['First Name'] + " " + client_dict['Last Name']
-        del client_dict['First Name']
-        del client_dict['Last Name']
-        self.new_df = pd.concat([self.new_df, pd.DataFrame(client_dict)], ignore_index=True)
-    '''
     
     # Make dictionary string more readable
     def __clean_dictionary_string(self, string):
