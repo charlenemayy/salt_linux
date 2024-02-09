@@ -44,12 +44,13 @@ class DailyData:
             row = self.df.iloc[row_index]
 
             # rearrange birthday and update row
-            date = row['DoB']
-            day = date[0:3]
-            month = date[3:6]
-            client_dict['DoB'] = month + day + date[6:(len(date))]
-            # update sheet for readability
-            self.df.at[row_index, 'DoB'] = client_dict['DoB']
+            if not isinstance(row['DoB'], float):
+                date = row['DoB']
+                day = date[0:3]
+                month = date[3:6]
+                client_dict['DoB'] = month + day + date[6:(len(date))]
+                # update sheet for readability
+                self.df.at[row_index, 'DoB'] = client_dict['DoB']
 
             # get total number of services and items
             services_dict = self.__get_service_totals(row, row_index)
@@ -84,6 +85,7 @@ class DailyData:
         self.__clean_dataframe(['Service', 'Items'], ['', 'HMIS ID', 'Client Name', 'Services', 'DoB'])
 
     def __automate_service_entry(self, client_dict, row_index):
+        print("\nEntering Client:" + client_dict['First Name'], client_dict['Last Name'])
         success = False
         # STEP ONE: SEARCH FOR CLIENT
         # Search by ID
@@ -92,13 +94,6 @@ class DailyData:
         # Search by DoB
         elif not isinstance(client_dict['DoB'], float) and client_dict['DoB'] != "":
             success = self.driver.search_client_by_birthdate(client_dict['DoB'], client_dict['First Name'], client_dict['Last Name'])
-        # Search by Name
-        elif (not isinstance(client_dict['First Name'], float)
-            and not isinstance(client_dict['Last Name'], float)
-            and (client_dict['First Name'] != "" and client_dict['Last Name'] != "")):
-            #TODO: search by client name
-            # success = self.driver.search_client_by_name(client_dict['First Name'], client_dict['Last Name'])
-            print("TODO")
         # Lack of Info
         else:
             print("Not enough data provided to search for client:")
@@ -119,7 +114,7 @@ class DailyData:
         date = self.__get_date_from_filename(self.filename)
         service_date = str(date.strftime('%m%d%Y'))
 
-        # enter client services for client - expects date with no non-numeric values (no dashes, etc.)
+        # enter client services for client - expects date with no non-numeric values (no dashes, etc.)``
         success = self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'])
         if not success:
             print("Client services could not be entered into the system:")

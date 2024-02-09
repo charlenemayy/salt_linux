@@ -18,6 +18,7 @@ on HMIS' website.
 class Driver:
     # Global selectors
     iframe_id = "TabFrame_2"
+    wait_time = 10
 
     def __init__(self):
         chrome_options = Options()
@@ -45,7 +46,7 @@ class Driver:
         # find 'Clients' button on left sidebar
         self.browser.switch_to.default_content()
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.ID, button_nav_clients_page_id))
             )
             button_clients = self.browser.find_element(By.ID, button_nav_clients_page_id)
@@ -57,11 +58,11 @@ class Driver:
         
         # find 'Find Client' button on left sidebar after waiting for client dashboard to fully load
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.frame_to_be_available_and_switch_to_it((By.ID, self.iframe_id))
             ) 
             self.browser.switch_to.default_content()
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.ID, button_nav_find_clients_page_id))
             )
             button_find_client = self.browser.find_element(By.ID, button_nav_find_clients_page_id)
@@ -83,7 +84,7 @@ class Driver:
         # enter id into client id field
         self.__switch_to_iframe(self.iframe_id)
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.ID, field_client_id_id))
             )
             field_client_id = self.browser.find_element(By.ID, field_client_id_id)        
@@ -101,19 +102,22 @@ class Driver:
         # should load directly to client dashboard
         self.browser.switch_to.default_content()
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.presence_of_element_located((By.XPATH, label_client_name_xpath))
             )
             dashboard_name = self.browser.find_element(By.XPATH, label_client_name_xpath).text
             dashboard_first_name = dashboard_name.split(" ", 1)[0]
             dashboard_last_name = dashboard_name.split(" ", 1)[1]
+            min_score = 0.8
 
             # sometimes first and last names are swapped, check both scenarios
-            if self.__similar(dashboard_first_name, first_name, 0.9) and self.__similar(dashboard_last_name, last_name, 0.9):
+            if self.__similar(dashboard_first_name, first_name) >= min_score and self.__similar(dashboard_last_name, last_name) >= min_score:
                 return True
             # sometimes the first and last names are flipped
-            elif self.__similar(dashboard_first_name, last_name, 0.9) and self.__similar(dashboard_last_name, first_name, 0.9):
+            elif self.__similar(dashboard_first_name, last_name) >= min_score and self.__similar(dashboard_last_name, first_name) >= min_score:
                 return True
+            print("Client Name is not a match")
+            return False
         except Exception as e:
             print("Couldn't find correct Client Name")
             print(e)
@@ -130,7 +134,7 @@ class Driver:
 
         self.__switch_to_iframe(self.iframe_id)
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.ID, field_birthdate_id))
             )
             # enter birthday to field
@@ -146,26 +150,49 @@ class Driver:
             return False
 
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_all_elements_located((By.XPATH, table_search_results_rows_xpath))
             )
-            # search through rows in tables
+            # search through rows in tables for best match
+            result_max_score = 0
             table_search_results = self.browser.find_elements(By.XPATH, table_search_results_rows_xpath)
             for result in table_search_results:
                 result_first_name = result.find_element(By.XPATH, "td[2]").text
                 result_last_name = result.find_element(By.XPATH, "td[3]").text
-                if self.__similar(result_first_name, first_name, 0.9) and self.__similar(result_last_name, last_name, 0.9):
-                    result.click()
-                    break
+
+                # calculate the similarity score of the current result in list
+                first_name_score = self.__similar(result_first_name, first_name)
+                last_name_score = self.__similar(result_last_name, last_name) 
+                final_score = first_name_score + last_name_score
+                min_score = 1.55
+
+                # if a decent match, store the value and compare with other viable matches
+                if final_score >= min_score:
+                    if first_name_score + last_name_score > result_max_score:
+                        # update new max value
+                        result_max_score = first_name_score + last_name_score
+                        stored_result = result
+
                 # sometimes the first and last names are flipped
-                elif self.__similar(result_first_name, last_name, 0.9) and self.__similar(result_last_name, first_name, 0.9):
-                    result.click()
-                    break
-        except Exception as e:
+                first_name_score = self.__similar(result_first_name, last_name)
+                last_name_score = self.__similar(result_last_name, first_name)
+                final_score = first_name_score + last_name_score
+                if final_score >= min_score:
+                    if first_name_score + last_name_score > result_max_score:
+                        # update new max value
+                        result_max_score = first_name_score + last_name_score
+                        stored_result = result
+
+            if result_max_score > 0:
+                stored_result.click()
+                return True
+            
             print("Couldn't find client name among results")
+            return False
+        except Exception as e:
+            print("Error finding list of results")
             print(e)
             return False
-        return True
     
     # Navigates to the list of services page for the client, assumes the browser is at the Client Dashboard
     def navigate_to_service_list(self):
@@ -174,7 +201,7 @@ class Driver:
         self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.XPATH, link_services_xpath))
             )
             link_services = self.browser.find_element(By.XPATH, link_services_xpath)
@@ -214,7 +241,7 @@ class Driver:
             self.__switch_to_iframe(self.iframe_id)
             self.__wait_until_page_fully_loaded('Service')
             try:
-                WebDriverWait(self.browser, 30).until(
+                WebDriverWait(self.browser, self.wait_time).until(
                     EC.element_to_be_clickable((By.ID, button_add_new_service_id))
                 )
                 button_add_new_service = self.browser.find_element(By.ID, button_add_new_service_id)
@@ -229,7 +256,7 @@ class Driver:
 
             # find viable 'enrollment' option in the drop down list
             try:
-                WebDriverWait(self.browser, 30).until(
+                WebDriverWait(self.browser, self.wait_time).until(
                     EC.element_to_be_clickable((By.ID, dropdown_enrollment_id))
                 )
                 dropdown_enrollment = self.browser.find_element(By.ID, dropdown_enrollment_id)
@@ -244,7 +271,8 @@ class Driver:
                                 enrollment_found = True
                                 break
                 if not enrollment_found:
-                    raise
+                    print("Client is not enrolled")
+                    return False
                     # TODO: develop enroll client automation
                     # enroll the client and try again, enrollment should 
                     # be found in recursive call
@@ -256,7 +284,6 @@ class Driver:
                     '''
             except Exception as e:
                 print("Error finding enrollment")
-                print(e)
                 return False
 
             try:
@@ -283,6 +310,7 @@ class Driver:
                 # click save button
                 button_save = self.browser.find_element(By.ID, button_save_id)
                 button_save.click()
+                time.sleep(2)
             except Exception as e:
                 print("Couldn't enter " + service + " service for client")
                 print(e)
@@ -291,13 +319,14 @@ class Driver:
         return True
     
     # Returns a ratio showing how similar two strings are
-    def __similar(self, a, b, min_score):
-        return difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio() > min_score
+    def __similar(self, a, b):
+        score = difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio()
+        return score
 
     # Waits until a page is fully loaded before continuing
     def __wait_until_page_fully_loaded(self, page_name):
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 lambda browser: browser.execute_script('return document.readyState') == 'complete')
         except Exception as e:
             print("Error loading" + page_name + " page")
@@ -306,7 +335,7 @@ class Driver:
     # Focus on iframe with given ID
     def __switch_to_iframe(self, iframe_id):
         try:
-            WebDriverWait(self.browser, 30).until(
+            WebDriverWait(self.browser, self.wait_time).until(
                 EC.frame_to_be_available_and_switch_to_it((By.ID, iframe_id))
             )
         except Exception as e:
