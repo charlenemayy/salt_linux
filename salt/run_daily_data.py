@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 import daily_data
+import datetime
 
 # Command Line Arguments
 parser = argparse.ArgumentParser()
@@ -11,6 +12,8 @@ parser.add_argument("-a", "--automate", action='store_true') # Outputs a spreads
 parser.add_argument("-m", "--manual", action='store_true') # Outputs a readable spreadsheet for data to be entered manually
 
 args = parser.parse_args()
+
+start_time = datetime.datetime.now()
 
 df = pd.read_excel(io=args.filename,
                      dtype={'': object,
@@ -30,3 +33,9 @@ if args.manual:
        dd.export_manual_entry_data("~/Desktop/SALT/output/")
 if args.automate:
        dd.export_failed_automation_data("~/Desktop/SALT/output/")
+
+end_time = datetime.datetime.now()
+difference = end_time - start_time
+diff_in_seconds = difference.total_seconds()
+diff_in_minutes = divmod(diff_in_seconds, 60)[0]
+print("Total Automation Time: " + str(diff_in_minutes) + " minutes")

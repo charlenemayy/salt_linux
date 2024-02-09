@@ -79,7 +79,7 @@ class Driver:
 
         field_client_id_id = "1000005942_Renderer"
         button_search_id = "Renderer_SEARCH"
-        label_client_name_xpath = "//span[@class = 'entity-info-value'][@aria-label = 'Name']"
+        label_client_name_xpath = '//td[@class="Header ZoneTopRow_2"]//a'
 
         # enter id into client id field
         self.__switch_to_iframe(self.iframe_id)
@@ -101,21 +101,34 @@ class Driver:
         # check that name matches client data and id
         # should load directly to client dashboard
         self.browser.switch_to.default_content()
+        self.__switch_to_iframe(self.iframe_id) # wait for new iframe to load
+
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.presence_of_element_located((By.XPATH, label_client_name_xpath))
             )
-            dashboard_name = self.browser.find_element(By.XPATH, label_client_name_xpath).text
+            dashboard_title = self.browser.find_element(By.XPATH, label_client_name_xpath).get_attribute("title")
+            dashboard_name = dashboard_title.split("'s")[0]
             dashboard_first_name = dashboard_name.split(" ", 1)[0]
             dashboard_last_name = dashboard_name.split(" ", 1)[1]
-            min_score = 0.8
+            print("Gathered Name: " + dashboard_first_name, dashboard_last_name)
+
+            # calculate similarity score of the name on the dashboard and our clients name
+            min_score = 1.55
+            first_name_score = self.__similar(dashboard_first_name, first_name)
+            last_name_score = self.__similar(dashboard_last_name, last_name) 
+            final_score = first_name_score + last_name_score
+            if final_score >= min_score:
+                return True
 
             # sometimes first and last names are swapped, check both scenarios
-            if self.__similar(dashboard_first_name, first_name) >= min_score and self.__similar(dashboard_last_name, last_name) >= min_score:
+            first_name_score = self.__similar(dashboard_first_name, last_name)
+            last_name_score = self.__similar(dashboard_last_name, first_name) 
+            final_score = first_name_score + last_name_score
+
+            if final_score >= min_score:
                 return True
-            # sometimes the first and last names are flipped
-            elif self.__similar(dashboard_first_name, last_name) >= min_score and self.__similar(dashboard_last_name, first_name) >= min_score:
-                return True
+
             print("Client Name is not a match")
             return False
         except Exception as e:
