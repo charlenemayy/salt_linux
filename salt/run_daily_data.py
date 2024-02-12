@@ -31,8 +31,6 @@ dd = daily_data.DailyData(df, args.filename, args.automate, args.manual, args.ou
 dd.read_and_process_data()
 if args.manual:
        dd.export_manual_entry_data("~/Desktop/SALT/output/")
-if args.automate:
-       dd.export_failed_automation_data("~/Desktop/SALT/output/")
 
 end_time = datetime.datetime.now()
 difference = end_time - start_time

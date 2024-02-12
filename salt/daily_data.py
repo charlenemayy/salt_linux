@@ -60,7 +60,8 @@ class DailyData:
             self.df.at[row_index, 'Services'] = self.__clean_dictionary_string(str(client_dict['Services']))
 
             # split name into first and last
-            string_list = row['Client Name'].split(' ', 1)
+            # an entry like "Edward Powell James" -> "Edward Powell, James" (Last, First)
+            string_list = row['Client Name'].rsplit(' ', 1)
             client_dict['First Name'] = string_list[1]
             client_dict['Last Name'] = string_list[0]
 
@@ -122,6 +123,7 @@ class DailyData:
             return
         # remove client from list of failed automated entries
         self.failed_df = self.failed_df.drop([row_index])
+        self.export_failed_automation_data("~/Desktop/SALT/output/")
 
     # Remove unecessary columns and reorganize for easier entry
     def __clean_dataframe(self, drop_columns, reorder_columns):
