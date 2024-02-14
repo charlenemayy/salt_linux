@@ -37,3 +37,4 @@ difference = end_time - start_time
 diff_in_seconds = difference.total_seconds()
 diff_in_minutes = divmod(diff_in_seconds, 60)[0]
 print("Total Automation Time: " + str(diff_in_minutes) + " minutes")
+# print("Failed Entries: " + " Clients")

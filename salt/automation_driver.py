@@ -124,13 +124,13 @@ class Driver:
             first_name_score = self.__similar(dashboard_first_name, last_name)
             last_name_score = self.__similar(dashboard_last_name, first_name) 
             final_score_two = first_name_score + last_name_score
-
             if final_score_two >= min_score:
                 return True
 
             print("Client Name is not a match")
+            print("Current Client: " + first_name, last_name)
             print("Loaded Client: " + dashboard_first_name, dashboard_last_name)
-            print("Similarity Scores: ", final_score_one, final_score_two)
+            print("Similarity Score: ", max(final_score_one, final_score_two))
             return False
         except Exception as e:
             print("Couldn't find correct Client Name")

@@ -59,9 +59,10 @@ class DailyData:
             # update sheet for readability
             self.df.at[row_index, 'Services'] = self.__clean_dictionary_string(str(client_dict['Services']))
 
-            # split name into first and last
+            # split name into first and last and strip any trailing whitespaces
             # an entry like "Edward Powell James" -> "Edward Powell, James" (Last, First)
-            string_list = row['Client Name'].rsplit(' ', 1)
+            stripped_name = row['Client Name'].strip()
+            string_list = stripped_name.rsplit(' ', 1)
             client_dict['First Name'] = string_list[1]
             client_dict['Last Name'] = string_list[0]
 
