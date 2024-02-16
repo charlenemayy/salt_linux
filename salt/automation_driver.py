@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 import difflib
 import time
@@ -41,6 +42,7 @@ class Driver:
     # Navigate to 'Client Dashboard' page
     def navigate_to_client_dashboard(self):
         button_nav_clients_page_id = "ws_2_tab"
+        button_nav_dashboard_page_id = "o1000000033"
 
         # find 'Clients' button on left sidebar
         self.browser.switch_to.default_content()
@@ -51,7 +53,18 @@ class Driver:
             button_clients = self.browser.find_element(By.ID, button_nav_clients_page_id)
             button_clients.click()
         except Exception as e:
-            print("Couldn't navigate to 'Client Dashboard' page")
+            print("Couldn't navigate to 'Clients' page")
+            print(e)
+            return False
+
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_nav_dashboard_page_id))
+            )
+            button_dashboard = self.browser.find_element(By.ID, button_nav_dashboard_page_id)
+            button_dashboard.click()
+        except Exception as e:
+            print("Couldn't navigate to 'Dashboard' page")
             print(e)
             return False
 
@@ -321,6 +334,7 @@ class Driver:
                 if not enrollment_found:
                     # enroll the client and try again, enrollment should be found in recursive call
                     print("Client is not enrolled -- Enrolling client")
+                    self.navigate_to_client_dashboard()
                     if not self.enroll_client(service_date):
                         return False
 
@@ -363,7 +377,7 @@ class Driver:
         # For Loop End - Success!
         return True
     
-    def enroll_client(self, service_id):
+    def enroll_client(self, service_date):
         button_new_enrollment_id = "Renderer_1000000248"
         dropdown_veteran_status_id = "1000006680_Renderer"
         option_data_not_collected_value = "99"
@@ -371,9 +385,9 @@ class Driver:
         button_save_and_close_id = "Renderer_SAVEFINISH"
         dropdown_project_id = "1000004260_Renderer"
         option_salt_orl_enrollment_value = "1217"
-        dropdown_rel_to_head_of_household_id = "107608_RendererSF1::72253"
-        field_project_date_id = "107601_RendererSF1::72253"
-        field_date_of_engagement_id = "107616_RendererSF1::72253"
+        dropdown_rel_to_head_of_household_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/select'
+        field_project_date_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
+        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         button_save_id = "Renderer_SAVE"
 
         self.navigate_to_enrollment_list()
@@ -402,11 +416,10 @@ class Driver:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.ID, dropdown_veteran_status_id))
             )
-            dropdown_veteran_status = self.browser.find_element(By.ID, dropdown_veteran_status_id)
+            dropdown_veteran_status = Select(self.browser.find_element(By.ID, dropdown_veteran_status_id))
             selected_option = dropdown_veteran_status.first_selected_option
-            print(selected_option.text)
 
-            if selected_option.text.contains("SELECT"):
+            if "SELECT" in selected_option.text:
                 option_data_not_collected_xpath = ('//select[@id="%s"]//option[@value="%s"]' 
                                                    %(dropdown_veteran_status_id, option_data_not_collected_value))
                 option_data_not_collected = self.browser.find_element(By.XPATH, option_data_not_collected_xpath)
@@ -459,23 +472,35 @@ class Driver:
         # update household data for program enrollment and only enroll current client (not family members)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.ID, dropdown_rel_to_head_of_household_id))
+                EC.element_to_be_clickable((By.XPATH, dropdown_rel_to_head_of_household_xpath))
             )
             # TODO: fix code for when household has multiple members -- rare case
             # find correct household member (check by name?)
             # click 'SELF' option
-
-            # update dates
-            field_project_date = self.browser.find_element(By.ID, field_project_date_id)
+            time.sleep(1)
+            field_project_date = self.browser.find_elements(By.XPATH, field_project_date_xpath)[2]
+            self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
+            time.sleep(1)
+            WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_project_date))
+            field_project_date.click()
+            time.sleep(1)
             field_project_date.clear()
+            time.sleep(1)
             field_project_date.send_keys(service_date)
             time.sleep(1)
 
-            field_date_of_engagement = self.browser.find_element(By.ID, field_date_of_engagement_id)
+            field_date_of_engagement = self.browser.find_elements(By.XPATH, field_date_of_engagement_xpath)[3]
+            print(field_date_of_engagement.get_attribute("name"))
+            self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
+            time.sleep(1)
+            WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
+            field_date_of_engagement.click()
+            print(field_date_of_engagement.get_attribute("name"))
+            time.sleep(1)
             field_date_of_engagement.clear()
+            time.sleep(1)
             field_date_of_engagement.send_keys(service_date)
             time.sleep(1)
-
             button_save = self.browser.find_element(By.ID, button_save_id)
             button_save.click()
             time.sleep(2)
@@ -487,7 +512,7 @@ class Driver:
     
     # Navigates to a list of the Client's enrollments, assumes already on Client Dashboard page
     def navigate_to_enrollment_list(self):
-        link_enrollments_xpath = '//td[@class="HeaderLeft"]//a'
+        link_enrollments_xpath = '//td[@class="Header ZoneMiddleMiddle_2"]//a'
 
         self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
