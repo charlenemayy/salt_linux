@@ -118,7 +118,7 @@ class Driver:
             dashboard_last_name = dashboard_name.split(" ", 1)[1]
 
             # calculate similarity score of the name on the dashboard and our clients name
-            min_score = 0.85
+            min_score = 0.80
             first_name_score = self.__similar(dashboard_first_name, first_name)
             last_name_score = self.__similar(dashboard_last_name, last_name) 
             final_score_one = first_name_score + last_name_score
@@ -182,7 +182,7 @@ class Driver:
                 first_name_score = self.__similar(result_first_name, first_name)
                 last_name_score = self.__similar(result_last_name, last_name) 
                 final_score = first_name_score + last_name_score
-                min_score = 1.55
+                min_score = 1.4
 
                 # if a decent match, store the value and compare with other viable matches
                 if final_score >= min_score:
@@ -200,10 +200,40 @@ class Driver:
                         # update new max value
                         result_max_score = first_name_score + last_name_score
                         stored_result = result
-
+            # For Loop End
+                
             if result_max_score > 0:
                 stored_result.click()
                 return True
+
+            # if there still isn't a decent match, check middle name field and different combinations
+            last_names = last_name.split(" ", 1) 
+            names = last_names + [first_name]
+
+            # if name has a potential middle name
+            if result_max_score == 0 and len(names) > 2:
+                print("Checking Middle Name")
+                result_mid_name = result.find_element(By.XPATH, "td[4]").text
+                min_score = 2 # 3 is a perfect match (first, middle, last)
+                for result in table_search_results:
+                    # check every combination of names to middle names
+                    for name in names:
+                        remaining_names = names
+                        remaining_names.remove(name)
+
+                        first_name_score = self.__similar(result_first_name, name)
+                        for i in range(2):
+                            mid_name_score = self.__similar(result_mid_name, remaining_names[i%2])
+                            last_name_score = self.__similar(result_last_name, remaining_names[(i+1)%2])
+                            final_score = first_name_score + mid_name_score + last_name_score
+                            if final_score >= min_score:
+                                print(result_first_name, first_name)
+                                print(result_mid_name, remaining_names[i%2])
+                                print(result_last_name, remaining_names[(i+1)%2])
+                                result_max_score = final_score
+                                stored_result = result
+                        
+                    # def __sample(self, actual_name1, actual_name2, actual_name3, expected_name1, expected_name2, expected_name3)
             
             print("Couldn't find client name among results")
             return False
