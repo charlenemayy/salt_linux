@@ -38,10 +38,9 @@ class Driver:
         field_password.send_keys(password)
         field_password.send_keys(Keys.RETURN)
     
-    # Navigate to 'Find Client' page
-    def navigate_to_find_client(self):
+    # Navigate to 'Client Dashboard' page
+    def navigate_to_client_dashboard(self):
         button_nav_clients_page_id = "ws_2_tab"
-        button_nav_find_clients_page_id = "o1000000037"
 
         # find 'Clients' button on left sidebar
         self.browser.switch_to.default_content()
@@ -52,9 +51,15 @@ class Driver:
             button_clients = self.browser.find_element(By.ID, button_nav_clients_page_id)
             button_clients.click()
         except Exception as e:
-            print("Couldn't navigate to 'Clients' page")
+            print("Couldn't navigate to 'Client Dashboard' page")
             print(e)
             return False
+
+    # Navigate to 'Find Client' page
+    def navigate_to_find_client(self):
+        button_nav_find_clients_page_id = "o1000000037"
+
+        self.navigate_to_client_dashboard()
         
         # find 'Find Client' button on left sidebar after waiting for client dashboard to fully load
         try:
@@ -136,7 +141,6 @@ class Driver:
             print("Couldn't find correct Client Name")
             print(e)
             return False
-        return True
 
     # Search for client by their birthday and selects their name from a list
     def search_client_by_birthdate(self, birthdate, first_name, last_name):
@@ -285,17 +289,14 @@ class Driver:
                                 enrollment_found = True
                                 break
                 if not enrollment_found:
-                    print("Client is not enrolled")
-                    return False
-                    # TODO: develop enroll client automation
-                    # enroll the client and try again, enrollment should 
-                    # be found in recursive call
-                    '''
-                    self.enroll_client()
+                    # enroll the client and try again, enrollment should be found in recursive call
+                    print("Client is not enrolled -- Enrolling client")
+                    if not self.enroll_client(service_date):
+                        return False
+
+                    print("Successfully enrolled client -- Entering services")
                     self.navigate_to_client_dashboard()
-                    self.enter_client_services()
-                    return
-                    '''
+                    return self.enter_client_services()
             except Exception as e:
                 print("Error finding enrollment")
                 return False
@@ -330,6 +331,146 @@ class Driver:
                 print(e)
                 return False
         # For Loop End - Success!
+        return True
+    
+    def enroll_client(self, service_id):
+        button_new_enrollment_id = "Renderer_1000000248"
+        dropdown_veteran_status_id = "1000006680_Renderer"
+        option_data_not_collected_value = "99"
+        button_finish_id = "Renderer_SAVE"
+        button_save_and_close_id = "Renderer_SAVEFINISH"
+        dropdown_project_id = "1000004260_Renderer"
+        option_salt_orl_enrollment_value = "1217"
+        dropdown_rel_to_head_of_household_id = "107608_RendererSF1::72253"
+        field_project_date_id = "107601_RendererSF1::72253"
+        field_date_of_engagement_id = "107616_RendererSF1::72253"
+        button_save_id = "Renderer_SAVE"
+
+        self.navigate_to_enrollment_list()
+
+        # wait for Enrollments page to be fully loaded before clicking new enrollment button
+        self.browser.switch_to.default_content()
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Enrollments')
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_new_enrollment_id))
+            )
+            button_new_enrollment = self.browser.find_element(By.ID, button_new_enrollment_id)
+            button_new_enrollment.click()
+        except Exception as e:
+            print("Couldn't click 'New Enrollment' button")
+            print(e)
+            return False
+        
+        # wait for Intake page to be fully loaded
+        self.__wait_until_page_fully_loaded('Intake - Basic Client Info')
+
+        # sometimes the 'Veteran Status' field hasn't been updated as its a new required field
+        # check that the dropdown isn't on "--SELECT--" option before hitting submit
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, dropdown_veteran_status_id))
+            )
+            dropdown_veteran_status = self.browser.find_element(By.ID, dropdown_veteran_status_id)
+            selected_option = dropdown_veteran_status.first_selected_option
+            print(selected_option.text)
+
+            if selected_option.text.contains("SELECT"):
+                option_data_not_collected_xpath = ('//select[@id="%s"]//option[@value="%s"]' 
+                                                   %(dropdown_veteran_status_id, option_data_not_collected_value))
+                option_data_not_collected = self.browser.find_element(By.XPATH, option_data_not_collected_xpath)
+                option_data_not_collected.click()
+            time.sleep(1)
+        except Exception as e:
+            print("Couldn't update Veteran Status")
+            print(e)
+            return False
+
+        button_finish = self.browser.find_element(By.ID, button_finish_id)
+        button_finish.click()
+        time.sleep(2)
+
+        # wait until 'Family Members' section loads
+        self.browser.switch_to.default_content()
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Intake - Family Members')
+
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_save_and_close_id))
+            )
+            button_save_and_close = self.browser.find_element(By.ID, button_save_and_close_id)
+            button_save_and_close.click()
+        except Exception as e:
+            print("Couldn't Save 'Family Members' section of Intake")
+            print(e)
+            return False
+
+        # wait until 'Program Enrollment' section loads
+        self.browser.switch_to.default_content()
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Intake - Program Enrollment')
+        
+        # select 1217 - SALT Outreach - ORL ESG Street Outreach:SO
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, dropdown_project_id))
+            )
+            dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_project_id, option_salt_orl_enrollment_value)
+            option_salt_orl = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+            option_salt_orl.click()
+            time.sleep(1)
+        except Exception as e:
+            print("Couldn't find SALT ORL Enrollment in options")
+            print(e)
+            return False
+
+        # update household data for program enrollment and only enroll current client (not family members)
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, dropdown_rel_to_head_of_household_id))
+            )
+            # TODO: fix code for when household has multiple members -- rare case
+            # find correct household member (check by name?)
+            # click 'SELF' option
+
+            # update dates
+            field_project_date = self.browser.find_element(By.ID, field_project_date_id)
+            field_project_date.clear()
+            field_project_date.send_keys(service_date)
+            time.sleep(1)
+
+            field_date_of_engagement = self.browser.find_element(By.ID, field_date_of_engagement_id)
+            field_date_of_engagement.clear()
+            field_date_of_engagement.send_keys(service_date)
+            time.sleep(1)
+
+            button_save = self.browser.find_element(By.ID, button_save_id)
+            button_save.click()
+            time.sleep(2)
+        except Exception as e:
+            print("Couldn't update household correctly")
+            print(e)
+            return False
+        return True
+    
+    # Navigates to a list of the Client's enrollments, assumes already on Client Dashboard page
+    def navigate_to_enrollment_list(self):
+        link_enrollments_xpath = '//td[@class="HeaderLeft"]//a'
+
+        self.browser.switch_to.default_content()
+        self.__switch_to_iframe(self.iframe_id)
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.XPATH, link_enrollments_xpath))
+            )
+            link_enrollments = self.browser.find_element(By.XPATH, link_enrollments_xpath)
+            link_enrollments.click()
+        except Exception as e:
+            print("Couldn't click 'Enrollments' link")
+            print(e)
+            return False
         return True
     
     # Returns a ratio showing how similar two strings are
