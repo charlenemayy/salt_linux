@@ -19,6 +19,8 @@ on HMIS' website.
 class Driver:
     # Global selectors
     iframe_id = "TabFrame_2"
+    iframe_dialog_id = "Frame"
+    iframe_dialog_counter = 1
     wait_time = 10
 
     def __init__(self):
@@ -259,6 +261,7 @@ class Driver:
     def navigate_to_service_list(self):
         link_services_xpath = '//td[@class="Header ZoneMiddleRight_2"]//a'
 
+        self.__wait_until_page_fully_loaded("Client Dashboard")
         self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         try:
@@ -339,8 +342,7 @@ class Driver:
                         return False
 
                     print("Successfully enrolled client -- Entering services")
-                    self.navigate_to_client_dashboard()
-                    return self.enter_client_services()
+                    return self.enter_client_services(viable_enrollment_list, service_date, services_dict)
             except Exception as e:
                 print("Error finding enrollment")
                 return False
@@ -389,6 +391,9 @@ class Driver:
         field_project_date_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         button_save_id = "Renderer_SAVE"
+        button_cancel_workflow_xpath = '//div[@class="workflow-controls"]/button[@aria-label="Cancel the workflow"]'
+        iframe_dialog_id = 'Frame1'
+        button_dialog_yes_id = 'YesButton'
 
         self.navigate_to_enrollment_list()
 
@@ -490,12 +495,10 @@ class Driver:
             time.sleep(1)
 
             field_date_of_engagement = self.browser.find_elements(By.XPATH, field_date_of_engagement_xpath)[3]
-            print(field_date_of_engagement.get_attribute("name"))
             self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
             time.sleep(1)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
             field_date_of_engagement.click()
-            print(field_date_of_engagement.get_attribute("name"))
             time.sleep(1)
             field_date_of_engagement.clear()
             time.sleep(1)
@@ -506,6 +509,30 @@ class Driver:
             time.sleep(2)
         except Exception as e:
             print("Couldn't update household correctly")
+            print(e)
+            return False
+        
+        # cancel the workflow assessment -- not enough information has been provided for us to do an assessment
+        self.__wait_until_page_fully_loaded("Intake - Client Assessment")
+        self.browser.switch_to.default_content()
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.XPATH, button_cancel_workflow_xpath))
+            )
+            button_cancel_workflow = self.browser.find_element(By.XPATH, button_cancel_workflow_xpath)
+            button_cancel_workflow.click()
+
+            self.browser.switch_to.default_content()
+            # update id for iframe, it increments by one every time its open
+            # which like... why ????? who coded this ???
+            current_dialog_iframe = self.iframe_dialog_id + str(self.iframe_dialog_counter)
+            self.iframe_dialog_counter += 1
+            self.__switch_to_iframe(current_dialog_iframe)
+            WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable((By.ID, button_dialog_yes_id)))
+            button_dialog_yes = self.browser.find_element(By.ID, button_dialog_yes_id)
+            button_dialog_yes.click()
+        except Exception as e:
+            print("Couldn't cancel the Intake workflow")
             print(e)
             return False
         return True
