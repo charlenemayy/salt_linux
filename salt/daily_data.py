@@ -206,7 +206,7 @@ class DailyData:
             if self.show_output:
                 print("Clothing: " + str(clothing_count))
 
-            # Grooming/Hygiene 
+            # Grooming/Hygiene
             grooming_count = 0
             for item in DailyData.grooming_item_codes:
                 index = row_items.find(item)
@@ -221,14 +221,22 @@ class DailyData:
             # add body wash + shampoo for each shower
             if 'Shower' in services_dict:
                 grooming_count += (services_dict['Shower'] * 2)
-            # add detergent for each laundry run (wash + dry)
-            if 'Laundry' in services_dict:
-                grooming_count += int(services_dict['Laundry'] / 2)
             if grooming_count > 0:
                 items_string = (items_string + "Grooming: " + str(grooming_count) + "\n")
                 items_dict['Grooming'] = grooming_count
             if self.show_output:
                 print("Grooming: " + str(grooming_count))
+
+            # Laundry Products
+            laundry_product_count = 0
+            if 'Laundry' in services_dict:
+                # add detergent for each laundry run (wash + dry)
+                laundry_product_count += int(services_dict['Laundry'] / 2)
+            if laundry_product_count > 0:
+                items_string = (items_string + "Laundry Products: " + str(laundry_product_count) + "\n")
+                items_dict['Laundry Products'] = laundry_product_count
+            if self.show_output:
+                print("Laundry Products: " + str(grooming_count))
 
             # Food 
             food_count = 0
@@ -269,16 +277,22 @@ class DailyData:
         elif (services_dict): 
             items_string = ""
             grooming_count = 0
+            laundry_product_count = 0
             if 'Shower' in services_dict:
                 grooming_count += (services_dict['Shower'] * 2)
-            # add detergent for each laundry run (wash + dry)
-            if 'Laundry' in services_dict:
-                grooming_count += int(services_dict['Laundry'] / 2)
             if grooming_count > 0:
                 items_string = (items_string + "Grooming: " + str(grooming_count) + "\n")
                 items_dict['Grooming'] = grooming_count
-            if self.show_output:
-                print("Grooming: " + str(grooming_count))
+                if self.show_output:
+                    print("Grooming: " + str(grooming_count))
+            # add detergent for each laundry run (wash + dry)
+            if 'Laundry' in services_dict:
+                laundry_product_count += int(services_dict['Laundry'] / 2)
+            if laundry_product_count > 0:
+                items_string = (items_string + "Laundry Products: " + str(laundry_product_count) + "\n")
+                items_dict['Laundry Products'] = laundry_product_count
+                if self.show_output:
+                    print("Laundry Products: " + str(laundry_product_count))
 
         return items_dict
     

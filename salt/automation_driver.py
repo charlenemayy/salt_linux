@@ -120,7 +120,6 @@ class Driver:
 
         # check that name matches client data and id
         # should load directly to client dashboard
-        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id) # wait for new iframe to load
 
         try:
@@ -262,7 +261,6 @@ class Driver:
         link_services_xpath = '//td[@class="Header ZoneMiddleRight_2"]//a'
 
         self.__wait_until_page_fully_loaded("Client Dashboard")
-        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -287,6 +285,7 @@ class Driver:
         options_service_values = {'Bible Study' : '690',
                                   'Shower' : '289',
                                   'Laundry' : '529',
+                                  'Laundry Products' : '605',
                                   'Bedding' : '538',
                                   'Clothing' : '526',
                                   'Grooming' : '530',
@@ -301,7 +300,6 @@ class Driver:
         # start entering services
         for service, service_count in services_dict.items():
             # wait until 'Services' page is fully loaded and 'Add Service Button' is clickable
-            self.browser.switch_to.default_content()
             self.__switch_to_iframe(self.iframe_id)
             self.__wait_until_page_fully_loaded('Service')
             try:
@@ -391,14 +389,10 @@ class Driver:
         field_project_date_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         button_save_id = "Renderer_SAVE"
-        button_cancel_workflow_xpath = '//div[@class="workflow-controls"]/button[@aria-label="Cancel the workflow"]'
-        iframe_dialog_id = 'Frame1'
-        button_dialog_yes_id = 'YesButton'
 
         self.navigate_to_enrollment_list()
 
         # wait for Enrollments page to be fully loaded before clicking new enrollment button
-        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Enrollments')
         try:
@@ -440,7 +434,6 @@ class Driver:
         time.sleep(2)
 
         # wait until 'Family Members' section loads
-        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Intake - Family Members')
 
@@ -456,7 +449,6 @@ class Driver:
             return False
 
         # wait until 'Program Enrollment' section loads
-        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Intake - Program Enrollment')
         
@@ -508,12 +500,20 @@ class Driver:
             button_save.click()
             time.sleep(2)
         except Exception as e:
-            print("Couldn't update household correctly")
+            print("Couldn't update household")
             print(e)
+            self.cancel_intake_workflow()
+            time.sleep(2)
             return False
         
         # cancel the workflow assessment -- not enough information has been provided for us to do an assessment
-        self.__wait_until_page_fully_loaded("Intake - Client Assessment")
+        return self.cancel_intake_workflow()
+
+    def cancel_intake_workflow(self):
+        button_cancel_workflow_xpath = '//div[@class="workflow-controls"]/button[@aria-label="Cancel the workflow"]'
+        button_dialog_yes_id = 'YesButton'
+
+        self.__wait_until_page_fully_loaded("Intake")
         self.browser.switch_to.default_content()
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -541,7 +541,6 @@ class Driver:
     def navigate_to_enrollment_list(self):
         link_enrollments_xpath = '//td[@class="Header ZoneMiddleMiddle_2"]//a'
 
-        self.browser.switch_to.default_content()
         self.__switch_to_iframe(self.iframe_id)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -571,6 +570,7 @@ class Driver:
 
     # Focus on iframe with given ID
     def __switch_to_iframe(self, iframe_id):
+        self.browser.switch_to.default_content()
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.frame_to_be_available_and_switch_to_it((By.ID, iframe_id))
