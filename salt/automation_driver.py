@@ -221,15 +221,28 @@ class Driver:
                 return True
 
             # if there still isn't a decent match, check middle name field and different combinations
+            print("Checking Middle Name")
             last_names = last_name.split(" ", 1) 
             names = last_names + [first_name]
 
-            # if name has a potential middle name
-            if result_max_score == 0 and len(names) > 2:
-                print("Checking Middle Name")
+            for result in table_search_results:
                 result_mid_name = result.find_element(By.XPATH, "td[4]").text
-                min_score = 2 # 3 is a perfect match (first, middle, last)
-                for result in table_search_results:
+                # if client has two names i.e. James Yates
+                if len(names) <= 2:
+                    min_score = 1.4
+                    mid_name_score = max(self.__similar(first_name, result_mid_name),
+                                          self.__similar(last_name, result_mid_name))
+                    first_name_score = max(self.__similar(first_name, result_first_name),
+                                           self.__similar(last_name, result_first_name))
+                    last_name_score = max(self.__similar(first_name, result_last_name),
+                                          self.__similar(last_name, result_last_name))
+                    final_score = max((first_name_score + mid_name_score), (last_name_score + mid_name_score))
+                    if final_score >= min_score and final_score > result_max_score:
+                        result_max_score = final_score
+                        stored_result = result
+                # if client name has three names i.e. James Baxton Yates, check every combo
+                else:
+                    min_score = 2 # 3 is a perfect match (first, middle, last)
                     # check every combination of names to middle names
                     for name in names:
                         remaining_names = names
@@ -240,15 +253,18 @@ class Driver:
                             mid_name_score = self.__similar(result_mid_name, remaining_names[i%2])
                             last_name_score = self.__similar(result_last_name, remaining_names[(i+1)%2])
                             final_score = first_name_score + mid_name_score + last_name_score
-                            if final_score >= min_score:
+                            if final_score >= min_score and final_score > result_max_score:
                                 print(result_first_name, first_name)
                                 print(result_mid_name, remaining_names[i%2])
                                 print(result_last_name, remaining_names[(i+1)%2])
                                 result_max_score = final_score
                                 stored_result = result
-                        
-                    # def __sample(self, actual_name1, actual_name2, actual_name3, expected_name1, expected_name2, expected_name3)
-            
+            # For Loop End
+
+            if result_max_score > 0:
+                stored_result.click()
+                return True
+
             print("Couldn't find client name among results")
             return False
         except Exception as e:
