@@ -226,6 +226,8 @@ class Driver:
             names = last_names + [first_name]
 
             for result in table_search_results:
+                result_first_name = result.find_element(By.XPATH, "td[2]").text
+                result_last_name = result.find_element(By.XPATH, "td[3]").text
                 result_mid_name = result.find_element(By.XPATH, "td[4]").text
                 # if client has two names i.e. James Yates
                 if len(names) <= 2:
@@ -245,7 +247,7 @@ class Driver:
                     min_score = 2 # 3 is a perfect match (first, middle, last)
                     # check every combination of names to middle names
                     for name in names:
-                        remaining_names = names
+                        remaining_names = names.copy()
                         remaining_names.remove(name)
 
                         first_name_score = self.__similar(result_first_name, name)
@@ -254,11 +256,9 @@ class Driver:
                             last_name_score = self.__similar(result_last_name, remaining_names[(i+1)%2])
                             final_score = first_name_score + mid_name_score + last_name_score
                             if final_score >= min_score and final_score > result_max_score:
-                                print(result_first_name, first_name)
-                                print(result_mid_name, remaining_names[i%2])
-                                print(result_last_name, remaining_names[(i+1)%2])
                                 result_max_score = final_score
                                 stored_result = result
+                        print()
             # For Loop End
 
             if result_max_score > 0:

@@ -125,7 +125,7 @@ class DailyData:
             return
         # remove client from list of failed automated entries
         self.failed_df = self.failed_df.drop([row_index])
-        self.export_failed_automation_data("~/Desktop/SALT/output/")
+        self.export_failed_automation_data("~/Downloads/")
 
     # Remove unecessary columns and reorganize for easier entry
     def __clean_dataframe(self, drop_columns, reorder_columns):
