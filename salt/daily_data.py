@@ -52,13 +52,6 @@ class DailyData:
                 # update sheet for readability
                 self.df.at[row_index, 'DoB'] = client_dict['DoB']
 
-            #TODO:
-            '''
-            client_dict['DoB'] = row['DoB']
-            print(client_dict['DoB'])
-            ###########################
-            '''
-
             # get total number of services and items
             services_dict = self.__get_service_totals(row, row_index)
             items_dict = self.__count_item_totals(row, row_index, services_dict)
