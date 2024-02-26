@@ -52,6 +52,13 @@ class DailyData:
                 # update sheet for readability
                 self.df.at[row_index, 'DoB'] = client_dict['DoB']
 
+            #TODO:
+            '''
+            client_dict['DoB'] = row['DoB']
+            print(client_dict['DoB'])
+            ###########################
+            '''
+
             # get total number of services and items
             services_dict = self.__get_service_totals(row, row_index)
             items_dict = self.__count_item_totals(row, row_index, services_dict)
@@ -61,10 +68,16 @@ class DailyData:
 
             # split name into first and last and strip any trailing whitespaces and nicknames in quotes
             # an entry like "Edward Powell James" -> "Edward Powell, James" (Last, First)
-            no_quotes_name = re.sub('(".*")', "", row['Client Name'])
+            # no_quotes_name = re.sub('(".*")', "", row['Client Name'])
+            # OR:
+            # just remove quotes, as it might be a potential middle name
+            no_quotes_name = row['Client Name'].replace('"', '')
             stripped_name = no_quotes_name.strip()
             string_list = stripped_name.rsplit(' ', 1)
-            client_dict['First Name'] = string_list[1]
+            if len(string_list) > 1:
+                client_dict['First Name'] = string_list[1]
+            else:
+                client_dict['First Name'] = ''
             client_dict['Last Name'] = string_list[0]
 
             # add remaining client info

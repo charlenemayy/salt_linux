@@ -405,6 +405,7 @@ class Driver:
         field_project_date_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         button_save_id = "Renderer_SAVE"
+        table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
 
         self.navigate_to_enrollment_list()
 
@@ -490,6 +491,12 @@ class Driver:
             # TODO: fix code for when household has multiple members -- rare case
             # find correct household member (check by name?)
             # click 'SELF' option
+            rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
+            if len(rows_family_members) > 1:
+                print("More than one family member to enroll, please enroll manually")
+                self.cancel_intake_workflow()
+                return False
+
             time.sleep(1)
             field_project_date = self.browser.find_elements(By.XPATH, field_project_date_xpath)[2]
             self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
