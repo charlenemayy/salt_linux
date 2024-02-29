@@ -405,13 +405,35 @@ class Driver:
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Edit Enrollment')
 
+        table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
         # update Date of Engagement field
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
             )
+            # find our current client among table of family members to update date of engagement
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
+            for row in rows_family_members:
+                select_rel_to_head_of_household = row.find_elements(By.XPATH, './td/select')[0]
+                dropdown_rel_to_head_of_household = Select(select_rel_to_head_of_household)
+                rel_to_head_of_household = dropdown_rel_to_head_of_household.first_selected_option.text
+                if rel_to_head_of_household == "Self":
+                    field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
+                    WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
+                    time.sleep(1)
+
+                    self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
+                    time.sleep(1)
+                    field_date_of_engagement.click()
+                    time.sleep(1)
+                    field_date_of_engagement.send_keys(service_date)
+                    time.sleep(10)
+
+                    button_save = self.browser.find_element(By.ID, button_save_id)
+                    button_save.click()
+                    time.sleep(1)
+            '''
             if len(rows_family_members) > 1:
                 #TODO: must automate this to save a lot of pain in the ass lol
                 print("More than one family member in household, please update DoE manually")
@@ -432,6 +454,7 @@ class Driver:
             button_save = self.browser.find_element(By.ID, button_save_id)
             button_save.click()
             time.sleep(2)
+            '''
         except Exception as e:
             print("Couldn't update Date of Engagement")
             print(traceback.format_exc())
