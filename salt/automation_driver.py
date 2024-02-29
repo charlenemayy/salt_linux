@@ -303,7 +303,6 @@ class Driver:
 
     # Find a favorable enrollment on the client dashboard and open its corresponding action menu
     def __open_link_in_enrollment_action_menu(self, viable_enrollment_list, link_name):
-        label_enrollment_row_name_xpath = ('//table[@id="wp85039573formResultSet"]/tbody//td[@data-eid="1000004028_wp85039573form"]')
         label_enrollment_row_name_xpath = ('//table[@id="wp85039573formResultSet"]/tbody//td[6]')
         button_action_menu_subxpath = '/td/a[@class="action-menu"]'
         iframe_action_menu_xpath = '//iframe[@src="completelyblank.html"]'
@@ -324,22 +323,35 @@ class Driver:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_element_located((By.XPATH, label_enrollment_row_name_xpath))
             )
-            label_enrollment_row_names = self.browser.find_elements(By.XPATH, label_enrollment_row_name_xpath)
+            rows_enrollment_xpath = '//table[@id="wp85039573formResultSet"]/tbody/tr'
+            cont = True
+
+            rows_enrollment = self.browser.find_elements(By.XPATH, rows_enrollment_xpath)
             stored_ranking = len(enrollment_ranking_dict)
-            # returns the desired enrollment we want to update
-            # check the viable_enrollment_list to see our most preferred enrollments (order matters)
-            for label_enrollment_row_name in label_enrollment_row_names:
-                # check if the row matches any of the viable enrollments
-                for enrollment, ranking in enrollment_ranking_dict.items():
-                    if enrollment in label_enrollment_row_name.text and ranking < stored_ranking:
-                        print(enrollment)
-                        print(label_enrollment_row_name.text)
-                        print()
-                        # ranking indicates that we'd like to update newer enrollments over older ones
-                        stored_ranking = ranking
-                        # get the parent element of where the label is located
-                        stored_row = label_enrollment_row_name.find_element(By.XPATH, '..')
+            for row in rows_enrollment:
+                if not cont:
+                    break
+                # if row is a header (i.e. Active, Exited)
+                if row.get_attribute("class") == "gbHead":
+                    # prevent from clicking on an expired enrollment
+                    label = row.find_element(By.XPATH, './td/a')
+                    if label.get_attribute("data-value") == "Exited":
+                        cont = False
                         break
+                # if row contains enrollment data
+                else:
+                    label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
+                    print(label_enrollment_name)
+                    for enrollment, ranking in enrollment_ranking_dict.items():
+                        if enrollment in label_enrollment_name and ranking < stored_ranking:
+                            # ranking indicates that we'd like to update newer enrollments over older ones
+                            stored_ranking = ranking
+                            # get the parent element of where the label is located
+                            stored_row = row
+                            break
+            # For Loop End
+
+            # click the best match
             if stored_ranking < len(enrollment_ranking_dict):
                 menu_action = stored_row.find_element(By.CLASS_NAME, 'action-menu')
                 self.browser.execute_script("arguments[0].scrollIntoView();", menu_action)
@@ -377,11 +389,11 @@ class Driver:
 
     def update_date_of_engagement(self, viable_enrollment_list, service_date):
         table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
-        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
+        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//span[@class="DateField input-group"]/input[0]'
         button_save_id = "Renderer_SAVE"
 
         self.__switch_to_iframe(self.iframe_id)
-        self.__wait_until_page_fully_loaded('Service')
+        self.__wait_until_page_fully_loaded('Edit Enrollment')
 
         if isinstance(self.navigate_to_edit_enrollment, Exception):
             return False
@@ -407,8 +419,10 @@ class Driver:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.XPATH, field_date_of_engagement_xpath))
             )
+            print("done!")
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
             if len(rows_family_members) > 1:
+                #TODO: must automate this to save a lot of pain in the ass lol
                 print("More than one family member in household, please update DoE manually")
                 self.navigate_to_client_dashboard()
                 return False
@@ -429,7 +443,7 @@ class Driver:
             time.sleep(2)
         except Exception as e:
             print("Couldn't update Date of Engagement")
-            print(e)
+            print(traceback.format_exc())
             return False
         return True
 
