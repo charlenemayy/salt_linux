@@ -304,8 +304,6 @@ class Driver:
     # Find a favorable enrollment on the client dashboard and open its corresponding action menu
     def __open_link_in_enrollment_action_menu(self, viable_enrollment_list, link_name):
         label_enrollment_row_name_xpath = ('//table[@id="wp85039573formResultSet"]/tbody//td[6]')
-        button_action_menu_subxpath = '/td/a[@class="action-menu"]'
-        iframe_action_menu_xpath = '//iframe[@src="completelyblank.html"]'
         links_enrollment_action_ids = {'Edit Enrollment': 'amb3',
                                        'Edit Project Entry Workflow': 'amb4'}
 
@@ -341,7 +339,6 @@ class Driver:
                 # if row contains enrollment data
                 else:
                     label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
-                    print(label_enrollment_name)
                     for enrollment, ranking in enrollment_ranking_dict.items():
                         if enrollment in label_enrollment_name and ranking < stored_ranking:
                             # ranking indicates that we'd like to update newer enrollments over older ones
@@ -387,6 +384,7 @@ class Driver:
             return e
         return True
 
+    # Updates the date of engagement field in the "Edit Enrollment" page to be the date of service 
     def update_date_of_engagement(self, viable_enrollment_list, service_date):
         table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//span[@class="DateField input-group"]/input[0]'
@@ -401,25 +399,18 @@ class Driver:
         # if the enrollment hasn't been found, enroll the client
         # once enrolled, the date of engagement will already be updated
         if not self.navigate_to_edit_enrollment(viable_enrollment_list):
-            time.sleep(10)
             return False
-            '''
-            print("Client is not enrolled -- Enrolling client")
-            if not self.enroll_client(service_date):
-                return False
-            return True
-            '''
 
         # wait for Edit Enrollment page to be fully loaded
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Edit Enrollment')
 
+        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
         # update Date of Engagement field
         try:
             WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.XPATH, field_date_of_engagement_xpath))
+                EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
             )
-            print("done!")
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
             if len(rows_family_members) > 1:
                 #TODO: must automate this to save a lot of pain in the ass lol
@@ -468,9 +459,14 @@ class Driver:
         field_date_id = "1000007086_Renderer"
         button_save_id = "Renderer_SAVE"
 
+        # for now only street outreach can update date of engagement
+        DoE_enrollment_list = [x for x in viable_enrollment_list if 'Street' in x]
+
         # update date of engagement and enroll client if not already enrolled
-        if not self.update_date_of_engagement(viable_enrollment_list, service_date):
-            return False
+        # if fails, do nothing; automation will enroll them anyway when entering services
+        # and thus keep the date of engagement updated
+        if not self.update_date_of_engagement(DoE_enrollment_list, service_date):
+            print("Couldn't update date of engagement, will enroll client")
 
         self.navigate_to_client_dashboard()
         self.navigate_to_service_list()
@@ -511,7 +507,6 @@ class Driver:
                                 enrollment_found = True
                                 break
                 # enroll the client and try again, enrollment should be found in recursive call
-                # this shouldn't happen with the new 'update date of engagement' feature, but just in case
                 if not enrollment_found:
                     print("Client is not enrolled -- Enrolling client")
                     self.navigate_to_client_dashboard()
