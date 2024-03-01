@@ -24,7 +24,7 @@ class Driver:
     iframe_dialog_counter = 1
 
     # Global Variables
-    wait_time = 10
+    wait_time = 3
 
     def __init__(self):
         chrome_options = Options()
@@ -152,7 +152,6 @@ class Driver:
             print("Client Name is not a match")
             print("Current Client: " + first_name, last_name)
             print("Loaded Client: " + dashboard_first_name, dashboard_last_name)
-            print("Similarity Score: ", max(final_score_one, final_score_two))
             return False
         except Exception as e:
             print("Couldn't find correct Client Name")
@@ -388,6 +387,7 @@ class Driver:
     def update_date_of_engagement(self, viable_enrollment_list, service_date):
         table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
+        field_assessment_xpath = '//table[@class="FormPage"]//td/span/input'
         button_save_id = "Renderer_SAVE"
 
         self.__switch_to_iframe(self.iframe_id)
@@ -410,6 +410,10 @@ class Driver:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
             )
+            # check if the client has had any assessments done (required for update)
+            field_assessment = self.browser.find_elements(By.XPATH, field_assessment_xpath)[3]
+            if not field_assessment.get_attribute("value"):
+                return False
             # find our current client among table of family members to update date of engagement
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
             for row in reversed(rows_family_members):
@@ -465,9 +469,10 @@ class Driver:
         # if fails, do nothing; automation will enroll them anyway when entering services
         # and thus keep the date of engagement updated
         if not self.update_date_of_engagement(DoE_enrollment_list, service_date):
-            print("Couldn't update date of engagement, will enroll client")
-        self.__wait_until_page_fully_loaded('Enrollment')
-        self.__wait_until_result_set_fully_loaded()
+            print("Couldn't update date of engagement")
+        else:
+            self.__wait_until_page_fully_loaded('Enrollment')
+            self.__wait_until_result_set_fully_loaded()
 
         self.navigate_to_client_dashboard()
         self.navigate_to_service_list()
