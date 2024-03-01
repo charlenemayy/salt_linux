@@ -131,6 +131,7 @@ class DailyData:
             return
         # remove client from list of failed automated entries
         self.failed_df = self.failed_df.drop([row_index])
+        print("Success! " + str(len(self.failed_df.index)) + " entries remaining")
         self.export_failed_automation_data("~/Downloads/")
 
     # Remove unecessary columns and reorganize for easier entry

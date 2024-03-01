@@ -155,7 +155,6 @@ class Driver:
             return False
         except Exception as e:
             print("Couldn't find correct Client Name")
-            print(e)
             return False
 
     # Search for client by their birthday and selects their name from a list

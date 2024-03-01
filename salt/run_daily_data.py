@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 import daily_data
 import datetime
+import warnings
 
 # Command Line Arguments
 parser = argparse.ArgumentParser()
@@ -32,7 +33,11 @@ df = pd.read_excel(io=args.filename,
                             'Items': object})
 
 dd = daily_data.DailyData(df, args.filename, args.automate, args.manual, args.output, args.listitems)
-dd.read_and_process_data()
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    dd.read_and_process_data()
+
 if args.manual:
        dd.export_manual_entry_data("~/Downloads/")
 
