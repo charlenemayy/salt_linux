@@ -461,17 +461,16 @@ class Driver:
         field_date_id = "1000007086_Renderer"
         button_save_id = "Renderer_SAVE"
 
-        # for now only street outreach can update date of engagement
-        DoE_enrollment_list = [x for x in viable_enrollment_list if 'Street' in x]
-
         # update date of engagement and enroll client if not already enrolled
         # if fails, do nothing; automation will enroll them anyway when entering services
         # and thus keep the date of engagement updated
-        if not self.update_date_of_engagement(DoE_enrollment_list, service_date):
-            print("Couldn't update date of engagement")
-        else:
-            self.__wait_until_page_fully_loaded('Enrollment')
-            self.__wait_until_result_set_fully_loaded()
+        # for now only street outreach can update date of engagement
+        # DoE_enrollment_list = [x for x in viable_enrollment_list if 'Street' in x]
+        # if not self.update_date_of_engagement(DoE_enrollment_list, service_date):
+        #     print("Couldn't update date of engagement")
+        # else:
+        #     self.__wait_until_page_fully_loaded('Enrollment')
+        #     self.__wait_until_result_set_fully_loaded()
 
         self.navigate_to_client_dashboard()
         self.navigate_to_service_list()
@@ -659,6 +658,8 @@ class Driver:
             if len(rows_family_members) > 1:
                 print("More than one family member to enroll, please enroll manually")
                 self.cancel_intake_workflow()
+                self.__wait_until_page_fully_loaded("Client Dashboard")
+                self.navigate_to_find_client()
                 return False
 
             time.sleep(1)
@@ -690,7 +691,8 @@ class Driver:
             print("Couldn't update household")
             print(e)
             self.cancel_intake_workflow()
-            time.sleep(2)
+            self.__wait_until_page_fully_loaded("Client Dashboard")
+            self.navigate_to_find_client()
             return False
         
         # cancel the workflow assessment -- not enough information has been provided for us to do an assessment

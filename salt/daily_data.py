@@ -45,7 +45,12 @@ class DailyData:
 
             # rearrange birthday and update row
             if not isinstance(row['DoB'], float):
-                date = row['DoB']
+                if isinstance(row['DoB'], datetime):
+                    date = row['DoB'].strftime('%m-%d-%Y')
+                    print(date) 
+                else:
+                    date = row['DoB']
+
                 day = date[0:3]
                 month = date[3:6]
                 client_dict['DoB'] = month + day + date[6:(len(date))]
