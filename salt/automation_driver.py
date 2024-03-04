@@ -766,7 +766,7 @@ class Driver:
             )
         except Exception as e:
             print("Error loading frame")
-            print(traceback.format_exc())
+            print(traceback.format_exc(e))
 
     # Focus on iframe with given ID
     def __switch_to_iframe(self, iframe_id):
