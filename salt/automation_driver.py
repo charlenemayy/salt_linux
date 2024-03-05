@@ -26,16 +26,18 @@ class Driver:
     # Global Variables
     wait_time = 3
 
+    '''
+    ------------------------ SETUP ------------------------
+    '''
+
     def __init__(self):
         chrome_options = Options()
         chrome_options.add_experimental_option("detach", True)
         self.browser = Chrome(options=chrome_options)
 
-    # Setup
     def open_clienttrack(self):
         self.browser.get('https://clienttrack.eccovia.com/login/HSNCFL')
 
-    # Login to Client Track
     def login_clienttrack(self, username, password):
         field_username = self.browser.find_element(By.ID, "UserName")
         field_password = self.browser.find_element(By.ID, "Password")
@@ -44,59 +46,14 @@ class Driver:
         field_password.send_keys(password)
         field_password.send_keys(Keys.RETURN)
     
-    # Navigate to 'Client Dashboard' page
-    def navigate_to_client_dashboard(self):
-        button_nav_clients_page_id = "ws_2_tab"
-        button_nav_dashboard_page_id = "o1000000033"
-
-        # find 'Clients' button on left sidebar
-        self.browser.switch_to.default_content()
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.ID, button_nav_clients_page_id))
-            )
-            button_clients = self.browser.find_element(By.ID, button_nav_clients_page_id)
-            button_clients.click()
-        except Exception as e:
-            print("Couldn't navigate to 'Clients' page")
-            print(traceback.format_exc())
-            return False
-
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.ID, button_nav_dashboard_page_id))
-            )
-            button_dashboard = self.browser.find_element(By.ID, button_nav_dashboard_page_id)
-            button_dashboard.click()
-        except Exception as e:
-            print("Couldn't navigate to 'Dashboard' page")
-            print(traceback.format_exc())
-            return False
-
-    # Navigate to 'Find Client' page
-    def navigate_to_find_client(self):
-        button_nav_find_clients_page_id = "o1000000037"
-
-        self.navigate_to_client_dashboard()
-        
-        # find 'Find Client' button on left sidebar after waiting for client dashboard to fully load
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.frame_to_be_available_and_switch_to_it((By.ID, self.iframe_id))
-            ) 
-            self.browser.switch_to.default_content()
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.ID, button_nav_find_clients_page_id))
-            )
-            button_find_client = self.browser.find_element(By.ID, button_nav_find_clients_page_id)
-            button_find_client.click()
-        except Exception as e:
-            print("Couldn't open 'Find Client' page")
-            print(traceback.format_exc())
-            return False
-        return True
-
-    # Search for a Client by their ID number and checks that the name is a relative match once found
+    '''
+    ------------------------ WORKFLOW ------------------------
+    '''
+    # Searches for a client by their ID number and checks that the name is a relative match once found
+    # @param: [str] id: ID of the client being searched
+    #         [str] first_name: first name to be checked
+    #         [str] last_name: last name to be checked
+    # @return: [bool] success / fail
     def search_client_by_ID(self, id, first_name, last_name):
         self.navigate_to_find_client()
 
@@ -157,7 +114,12 @@ class Driver:
             print("Couldn't find correct Client Name")
             return False
 
-    # Search for client by their birthday and selects their name from a list
+    # Searches for a client by their birthday and parses through the list of results,
+    #   selecting the best match
+    # @param: [str] birthdate: birthdate of the client being searched
+    #         [str] first_name: first name to be checked
+    #         [str] last_name: last name to be checked
+    # @return: [bool] success / fail
     def search_client_by_birthdate(self, birthdate, first_name, last_name):
         self.navigate_to_find_client()
 
@@ -272,175 +234,13 @@ class Driver:
             print("Error finding list of results")
             print(traceback.format_exc())
             return False
-    
-    # Navigates to the list of services page for the client, assumes the browser is at the Client Dashboard
-    def navigate_to_service_list(self):
-        link_services_xpath = '//td[@class="Header ZoneMiddleRight_2"]//a'
 
-        self.__wait_until_page_fully_loaded("Client Dashboard")
-        self.__switch_to_iframe(self.iframe_id)
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.XPATH, link_services_xpath))
-            )
-            link_services = self.browser.find_element(By.XPATH, link_services_xpath)
-            link_services.click()
-        except Exception as e:
-            print("Couldn't click 'Services' link")
-            print(traceback.format_exc())
-            return False
-        return True
-    
-    # Navigates to the edit enrollment page for client, assumes the browser is at the Client Dashboard
-    def navigate_to_edit_enrollment(self, viable_enrollment_list):
-        self.__wait_until_page_fully_loaded("Client Dashboard")
-        self.__switch_to_iframe(self.iframe_id)
-
-        return self.__open_link_in_enrollment_action_menu(viable_enrollment_list, "Edit Enrollment")
-
-
-    # Find a favorable enrollment on the client dashboard and open its corresponding action menu
-    def __open_link_in_enrollment_action_menu(self, viable_enrollment_list, link_name):
-        label_enrollment_row_name_xpath = ('//table[@id="wp85039573formResultSet"]/tbody//td[6]')
-        links_enrollment_action_ids = {'Edit Enrollment': 'amb3',
-                                       'Edit Project Entry Workflow': 'amb4'}
-
-        menu_id = 'ActionMenu'
-        link_id = links_enrollment_action_ids[link_name]
-        
-        # assign priority values to make variables less mutable
-        # realized it has the same complexity time as the way I matched names
-        # I don't know why I made it more complicated for myself lol
-        enrollment_ranking_dict = {}
-        for i in range(len(viable_enrollment_list)):
-            enrollment_ranking_dict[viable_enrollment_list[i]] = i
-
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.visibility_of_element_located((By.XPATH, label_enrollment_row_name_xpath))
-            )
-            rows_enrollment_xpath = '//table[@id="wp85039573formResultSet"]/tbody/tr'
-            cont = True
-
-            rows_enrollment = self.browser.find_elements(By.XPATH, rows_enrollment_xpath)
-            stored_ranking = len(enrollment_ranking_dict)
-            for row in rows_enrollment:
-                if not cont:
-                    break
-                # if row is a header (i.e. Active, Exited)
-                if row.get_attribute("class") == "gbHead":
-                    # prevent from clicking on an expired enrollment
-                    label = row.find_element(By.XPATH, './td/a')
-                    if label.get_attribute("data-value") == "Exited":
-                        cont = False
-                        break
-                # if row contains enrollment data
-                else:
-                    label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
-                    for enrollment, ranking in enrollment_ranking_dict.items():
-                        if enrollment in label_enrollment_name and ranking < stored_ranking:
-                            # ranking indicates that we'd like to update newer enrollments over older ones
-                            stored_ranking = ranking
-                            # get the parent element of where the label is located
-                            stored_row = row
-                            break
-            # For Loop End
-
-            # click the best match
-            if stored_ranking < len(enrollment_ranking_dict):
-                menu_action = stored_row.find_element(By.CLASS_NAME, 'action-menu')
-                self.browser.execute_script("arguments[0].scrollIntoView();", menu_action)
-                time.sleep(1)
-                menu_action.click()
-            else:
-                return False
-        except Exception as e:
-            print("Couldn't open Enrollment Action Menu")
-            print(traceback.format_exc())
-            return e
-
-        # wait for action menu to appear
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.visibility_of_element_located((By.ID, menu_id))
-            )
-        except Exception as e:
-            print("Couldn't find Action Menu")
-            print(traceback.format_exc())
-            return e
-
-        # select the desired link option from the action menu
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.ID, link_id))
-            )
-            link = self.browser.find_element(By.ID, link_id)
-            link.click()
-        except Exception as e:
-            print("Couldn't click link in Action Menu")
-            print(traceback.format_exc())
-            return e
-        return True
-
-    # Updates the date of engagement field in the "Edit Enrollment" page to be the date of service 
-    def update_date_of_engagement(self, viable_enrollment_list, service_date):
-        table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
-        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
-        field_assessment_xpath = '//table[@class="FormPage"]//td/span/input'
-        button_save_id = "Renderer_SAVE"
-
-        self.__switch_to_iframe(self.iframe_id)
-        self.__wait_until_page_fully_loaded('Edit Enrollment')
-
-        if isinstance(self.navigate_to_edit_enrollment, Exception):
-            return False
-
-        # if the enrollment hasn't been found, enroll the client
-        # once enrolled, the date of engagement will already be updated
-        if not self.navigate_to_edit_enrollment(viable_enrollment_list):
-            return False
-
-        # wait for Edit Enrollment page to be fully loaded
-        self.__switch_to_iframe(self.iframe_id)
-        self.__wait_until_page_fully_loaded('Edit Enrollment')
-
-        # update Date of Engagement field
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
-            )
-            # check if the client has had any assessments done (required for update)
-            field_assessment = self.browser.find_elements(By.XPATH, field_assessment_xpath)[3]
-            if not field_assessment.get_attribute("value"):
-                return False
-            # find our current client among table of family members to update date of engagement
-            rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
-            for row in reversed(rows_family_members):
-                select_rel_to_head_of_household = row.find_elements(By.XPATH, './td/select')[0]
-                dropdown_rel_to_head_of_household = Select(select_rel_to_head_of_household)
-                rel_to_head_of_household = dropdown_rel_to_head_of_household.first_selected_option.text
-                if rel_to_head_of_household == "Self":
-                    field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
-                    WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
-                    time.sleep(1)
-                    self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
-                    time.sleep(1)
-                    field_date_of_engagement.click()
-                    time.sleep(1)
-                    field_date_of_engagement.clear()
-                    time.sleep(1)
-                    field_date_of_engagement.send_keys(service_date)
-                    time.sleep(1)
-                    button_save = self.browser.find_element(By.ID, button_save_id)
-                    button_save.click()
-                    time.sleep(1)
-        except Exception as e:
-            print("Couldn't update Date of Engagement")
-            print(traceback.format_exc())
-            return False
-        return True
-
-    # Enter all the services associated with current client, service_date must be numeric values only
+    # Enters the services for the current client that's loaded
+    # @param: [list] viable_enrollment_list: list of favorable SALT enrollments, ordered from
+    #                                        most to least favorable
+    #         [str] service_date: date of service
+    #         [dict] services_dict: dictionary of services to be entered
+    # @return: [bool] success / fail
     def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
@@ -557,6 +357,9 @@ class Driver:
         # For Loop End - Success!
         return True
     
+    # Enrolls the client into the latest SALT program
+    # @param: [str] service_date: date of service
+    # @return: [bool] success / fail
     def enroll_client(self, service_date):
         button_new_enrollment_id = "Renderer_1000000248"
         dropdown_veteran_status_id = "1000006680_Renderer"
@@ -658,7 +461,7 @@ class Driver:
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
             if len(rows_family_members) > 1:
                 print("More than one family member to enroll, please enroll manually")
-                self.cancel_intake_workflow()
+                self.__cancel_intake_workflow()
                 self.__wait_until_page_fully_loaded("Client Dashboard")
                 self.navigate_to_find_client()
                 return False
@@ -691,15 +494,277 @@ class Driver:
         except Exception as e:
             print("Couldn't update household")
             print(traceback.format_exc())
-            self.cancel_intake_workflow()
+            self.__cancel_intake_workflow()
             self.__wait_until_page_fully_loaded("Client Dashboard")
             self.navigate_to_find_client()
             return False
         
         # cancel the workflow assessment -- not enough information has been provided for us to do an assessment
-        return self.cancel_intake_workflow()
+        return self.__cancel_intake_workflow()
 
-    def cancel_intake_workflow(self):
+    # Updates the date of engagement field in the 'Edit Enrollment' page to be the date of service
+    # @param: [list] viable_enrollment_list: list of favorable SALT enrollments, ordered from
+    #                                        most to least favorable
+    #         [str] service_date: date of service
+    # @return: [bool] success / fail
+    def update_date_of_engagement(self, viable_enrollment_list, service_date):
+        table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
+        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
+        field_assessment_xpath = '//table[@class="FormPage"]//td/span/input'
+        button_save_id = "Renderer_SAVE"
+
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Edit Enrollment')
+
+        if isinstance(self.navigate_to_edit_enrollment, Exception):
+            return False
+
+        # if the enrollment hasn't been found, enroll the client
+        # once enrolled, the date of engagement will already be updated
+        if not self.navigate_to_edit_enrollment(viable_enrollment_list):
+            return False
+
+        # wait for Edit Enrollment page to be fully loaded
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Edit Enrollment')
+
+        # update Date of Engagement field
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
+            )
+            # check if the client has had any assessments done (required for update)
+            field_assessment = self.browser.find_elements(By.XPATH, field_assessment_xpath)[3]
+            if not field_assessment.get_attribute("value"):
+                return False
+            # find our current client among table of family members to update date of engagement
+            rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
+            for row in reversed(rows_family_members):
+                select_rel_to_head_of_household = row.find_elements(By.XPATH, './td/select')[0]
+                dropdown_rel_to_head_of_household = Select(select_rel_to_head_of_household)
+                rel_to_head_of_household = dropdown_rel_to_head_of_household.first_selected_option.text
+                if rel_to_head_of_household == "Self":
+                    field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
+                    WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
+                    time.sleep(1)
+                    self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
+                    time.sleep(1)
+                    field_date_of_engagement.click()
+                    time.sleep(1)
+                    field_date_of_engagement.clear()
+                    time.sleep(1)
+                    field_date_of_engagement.send_keys(service_date)
+                    time.sleep(1)
+                    button_save = self.browser.find_element(By.ID, button_save_id)
+                    button_save.click()
+                    time.sleep(1)
+        except Exception as e:
+            print("Couldn't update Date of Engagement")
+            print(traceback.format_exc())
+            return False
+        return True
+
+    '''
+    ------------------------ NAVIGATION ------------------------
+    '''
+    # This function can be accessed from any page in HMIS
+    # @return: [bool] success / fail 
+    def navigate_to_client_dashboard(self):
+        button_nav_clients_page_id = "ws_2_tab"
+        button_nav_dashboard_page_id = "o1000000033"
+
+        # find 'Clients' button on left sidebar
+        self.browser.switch_to.default_content()
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_nav_clients_page_id))
+            )
+            button_clients = self.browser.find_element(By.ID, button_nav_clients_page_id)
+            button_clients.click()
+        except Exception as e:
+            print("Couldn't navigate to 'Clients' page")
+            print(traceback.format_exc())
+            return False
+
+        # click 'Dashboard' button in sidebar
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_nav_dashboard_page_id))
+            )
+            button_dashboard = self.browser.find_element(By.ID, button_nav_dashboard_page_id)
+            button_dashboard.click()
+        except Exception as e:
+            print("Couldn't navigate to 'Dashboard' page")
+            print(traceback.format_exc())
+            return False
+
+    # This function can be accessed from any page in HMIS
+    # @return: [bool] success / fail
+    def navigate_to_find_client(self):
+        button_nav_find_clients_page_id = "o1000000037"
+
+        self.navigate_to_client_dashboard()
+        
+        # find 'Find Client' button on left sidebar after waiting for client dashboard to fully load
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.frame_to_be_available_and_switch_to_it((By.ID, self.iframe_id))
+            ) 
+            self.browser.switch_to.default_content()
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_nav_find_clients_page_id))
+            )
+            button_find_client = self.browser.find_element(By.ID, button_nav_find_clients_page_id)
+            button_find_client.click()
+        except Exception as e:
+            print("Couldn't open 'Find Client' page")
+            print(traceback.format_exc())
+            return False
+        return True
+
+    # IMPORTANT: This function can only work if the browser is navigating from the 'Client Dashboard' page
+    #   Navigates to the list of services page for the current client loaded
+    # @return: [bool] success / fail
+    def navigate_to_service_list(self):
+        link_services_xpath = '//td[@class="Header ZoneMiddleRight_2"]//a'
+
+        self.__wait_until_page_fully_loaded("Client Dashboard")
+        self.__switch_to_iframe(self.iframe_id)
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.XPATH, link_services_xpath))
+            )
+            link_services = self.browser.find_element(By.XPATH, link_services_xpath)
+            link_services.click()
+        except Exception as e:
+            print("Couldn't click 'Services' link")
+            print(traceback.format_exc())
+            return False
+        return True
+    
+    # IMPORTANT: This function can only work if the browser is navigating from the 'Client Dashboard' page
+    #   Navigates to a list of the enrollments for the current client loaded
+    # @return: [bool] success / fail
+    def navigate_to_enrollment_list(self):
+        self.__wait_until_page_fully_loaded("Client Dashboard")
+        link_enrollments_xpath = '//td[@class="Header ZoneMiddleMiddle_2"]//a'
+
+        self.__switch_to_iframe(self.iframe_id)
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.XPATH, link_enrollments_xpath))
+            )
+            link_enrollments = self.browser.find_element(By.XPATH, link_enrollments_xpath)
+            link_enrollments.click()
+        except Exception as e:
+            print("Couldn't click 'Enrollments' link")
+            print(traceback.format_exc())
+            return False
+        return True
+    
+    # IMPORTANT: This function can only work if the browser is navigating from the 'Client Dashboard' page
+    #   Navigates to the edit enrollment page from the client's enrollment list on the dashboard
+    # @param: [list] viable_enrollment_list: list of valid SALT enrollments that can be edited, ordered from most
+    #                                        favorable to least
+    # @return: [bool] success / fail
+    def navigate_to_edit_enrollment(self, viable_enrollment_list):
+        self.__wait_until_page_fully_loaded("Client Dashboard")
+        self.__switch_to_iframe(self.iframe_id)
+
+        return self.__open_link_in_enrollment_action_menu(viable_enrollment_list, "Edit Enrollment")
+
+    # Finds a favorable enrollment under the list of enrollments on the 'Client Dashboard' page
+    #   and clicks its action menu
+    # @param: [list] viable_enrollment_list: list of valid SALT enrollments that can be edited, ordered from
+    #                                 most favorable to least
+    #         [str] link_name: name of the page to be opened from the Action Menu, should be one of the
+    #                    options that are under the action menu
+    # @return: [bool] success / fail
+    def __open_link_in_enrollment_action_menu(self, viable_enrollment_list, link_name):
+        label_enrollment_row_name_xpath = ('//table[@id="wp85039573formResultSet"]/tbody//td[6]')
+        links_enrollment_action_ids = {'Edit Enrollment': 'amb3',
+                                       'Edit Project Entry Workflow': 'amb4'}
+
+        menu_id = 'ActionMenu'
+        link_id = links_enrollment_action_ids[link_name]
+        
+        # assign priority values to make variables less mutable
+        # realized it has the same complexity time as the way I matched names
+        # I don't know why I made it more complicated for myself lol
+        enrollment_ranking_dict = {}
+        for i in range(len(viable_enrollment_list)):
+            enrollment_ranking_dict[viable_enrollment_list[i]] = i
+
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_element_located((By.XPATH, label_enrollment_row_name_xpath))
+            )
+            rows_enrollment_xpath = '//table[@id="wp85039573formResultSet"]/tbody/tr'
+            cont = True
+
+            rows_enrollment = self.browser.find_elements(By.XPATH, rows_enrollment_xpath)
+            stored_ranking = len(enrollment_ranking_dict)
+            for row in rows_enrollment:
+                if not cont:
+                    break
+                # if row is a header (i.e. Active, Exited)
+                if row.get_attribute("class") == "gbHead":
+                    # prevent from clicking on an expired enrollment
+                    label = row.find_element(By.XPATH, './td/a')
+                    if label.get_attribute("data-value") == "Exited":
+                        cont = False
+                        break
+                # if row contains enrollment data
+                else:
+                    label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
+                    for enrollment, ranking in enrollment_ranking_dict.items():
+                        if enrollment in label_enrollment_name and ranking < stored_ranking:
+                            # ranking indicates that we'd like to update newer enrollments over older ones
+                            stored_ranking = ranking
+                            # get the parent element of where the label is located
+                            stored_row = row
+                            break
+            # For Loop End
+
+            # click the best match
+            if stored_ranking < len(enrollment_ranking_dict):
+                menu_action = stored_row.find_element(By.CLASS_NAME, 'action-menu')
+                self.browser.execute_script("arguments[0].scrollIntoView();", menu_action)
+                time.sleep(1)
+                menu_action.click()
+            else:
+                return False
+        except Exception as e:
+            print("Couldn't open Enrollment Action Menu")
+            print(traceback.format_exc())
+            return e
+
+        # wait for action menu to appear
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_element_located((By.ID, menu_id))
+            )
+        except Exception as e:
+            print("Couldn't find Action Menu")
+            print(traceback.format_exc())
+            return e
+
+        # select the desired link option from the action menu
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, link_id))
+            )
+            link = self.browser.find_element(By.ID, link_id)
+            link.click()
+        except Exception as e:
+            print("Couldn't click link in Action Menu")
+            print(traceback.format_exc())
+            return e
+        return True
+
+    # Cancels the workflow of an enrollment / intake process by clicking cancel and hitting yes on the popup
+    # @return: [bool] success / fail 
+    def __cancel_intake_workflow(self):
         button_cancel_workflow_xpath = '//div[@class="workflow-controls"]/button[@aria-label="Cancel the workflow"]'
         button_dialog_yes_id = 'YesButton'
 
@@ -726,31 +791,21 @@ class Driver:
             print(traceback.format_exc())
             return False
         return True
-    
-    # Navigates to a list of the Client's enrollments, assumes already on Client Dashboard page
-    def navigate_to_enrollment_list(self):
-        self.__wait_until_page_fully_loaded("Client Dashboard")
-        link_enrollments_xpath = '//td[@class="Header ZoneMiddleMiddle_2"]//a'
 
-        self.__switch_to_iframe(self.iframe_id)
-        try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.XPATH, link_enrollments_xpath))
-            )
-            link_enrollments = self.browser.find_element(By.XPATH, link_enrollments_xpath)
-            link_enrollments.click()
-        except Exception as e:
-            print("Couldn't click 'Enrollments' link")
-            print(traceback.format_exc())
-            return False
-        return True
-    
+    '''
+    ------------------------ HELPER ------------------------
+    '''
+
     # Returns a ratio showing how similar two strings are
+    # @param: [str] a: string to be compared
+    #         [str] b: string to be compared
+    # @return: [int] similarity score
     def __similar(self, a, b):
         score = difflib.SequenceMatcher(a=a.lower(), b=b.lower()).ratio()
         return score
 
     # Waits until a page is fully loaded before continuing
+    # @param: [str] page_name: the name of the page to be printed in output to make debug easier
     def __wait_until_page_fully_loaded(self, page_name):
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -759,7 +814,8 @@ class Driver:
             print("Error loading" + page_name + " page")
             print(traceback.format_exc())
     
-    # Best used for waiting for a page with a list of results to load i.e. Enrollments, Services
+    # Similar to the funciton above, best used for waiting for a page with a list of 
+    #   results to load i.e. Enrollments, Services by checking for result set element
     def __wait_until_result_set_fully_loaded(self):
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -770,6 +826,7 @@ class Driver:
             print(traceback.format_exc())
 
     # Focus on iframe with given ID
+    # @param: [str] iframe_id: id of the iframe to be found
     def __switch_to_iframe(self, iframe_id):
         self.browser.switch_to.default_content()
         try:
