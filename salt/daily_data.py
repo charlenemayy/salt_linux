@@ -173,6 +173,17 @@ class DailyData:
                 i = substring.index(':')
                 services_dict['Laundry'] = int(substring[i+2]) * 2
 
+            index = row['Service'].find('Case Management')
+            if index >= 0:
+                # find num value attributed to laundry
+                string_list = row['Service'].split('Case Management')
+                substring = string_list[1]
+
+                # get first ':' following 'Laundry' ()
+                # multiply laundry x2 (one wash, one dry)
+                i = substring.index(':')
+                services_dict['Case Management'] = int(substring[i+2])
+
         return services_dict
 
     # Collect total number of items under each category for each client

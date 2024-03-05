@@ -59,7 +59,7 @@ class Driver:
             button_clients.click()
         except Exception as e:
             print("Couldn't navigate to 'Clients' page")
-            print(e)
+            print(traceback.format_exc())
             return False
 
         try:
@@ -70,7 +70,7 @@ class Driver:
             button_dashboard.click()
         except Exception as e:
             print("Couldn't navigate to 'Dashboard' page")
-            print(e)
+            print(traceback.format_exc())
             return False
 
     # Navigate to 'Find Client' page
@@ -92,7 +92,7 @@ class Driver:
             button_find_client.click()
         except Exception as e:
             print("Couldn't open 'Find Client' page")
-            print(e)
+            print(traceback.format_exc())
             return False
         return True
 
@@ -118,7 +118,7 @@ class Driver:
             button_search_id.click()
         except Exception as e:
             print("Couldn't find 'Client ID' field")
-            print(e)
+            print(traceback.format_exc())
             return False
 
         # check that name matches client data and id
@@ -179,7 +179,7 @@ class Driver:
             button_search_id.click()
         except Exception as e:
             print("Couldn't find 'Birth Date' field")
-            print(e)
+            print(traceback.format_exc())
             return False
 
         try:
@@ -270,7 +270,7 @@ class Driver:
             return False
         except Exception as e:
             print("Error finding list of results")
-            print(e)
+            print(traceback.format_exc())
             return False
     
     # Navigates to the list of services page for the client, assumes the browser is at the Client Dashboard
@@ -287,7 +287,7 @@ class Driver:
             link_services.click()
         except Exception as e:
             print("Couldn't click 'Services' link")
-            print(e)
+            print(traceback.format_exc())
             return False
         return True
     
@@ -455,7 +455,8 @@ class Driver:
                                   'Bedding' : '538',
                                   'Clothing' : '526',
                                   'Grooming' : '530',
-                                  'Food' : '359'}
+                                  'Food' : '359',
+                                  'Case Management': '372'}
         
         field_units_id = "1000007095_Renderer"
         field_date_id = "1000007086_Renderer"
@@ -489,7 +490,7 @@ class Driver:
                 button_add_new_service.click()
             except Exception as e:
                 print("Couldn't click 'Add New Service' button")
-                print(e)
+                print(traceback.format_exc())
                 return False
             
             # wait for 'Add Service' page to be fully loaded
@@ -551,7 +552,7 @@ class Driver:
                 time.sleep(2)
             except Exception as e:
                 print("Couldn't enter " + service + " service for client")
-                print(e)
+                print(traceback.format_exc())
                 return False
         # For Loop End - Success!
         return True
@@ -583,7 +584,7 @@ class Driver:
             button_new_enrollment.click()
         except Exception as e:
             print("Couldn't click 'New Enrollment' button")
-            print(e)
+            print(traceback.format_exc())
             return False
         
         # wait for Intake page to be fully loaded
@@ -606,7 +607,7 @@ class Driver:
             time.sleep(1)
         except Exception as e:
             print("Couldn't update Veteran Status")
-            print(e)
+            print(traceback.format_exc())
             return False
 
         button_finish = self.browser.find_element(By.ID, button_finish_id)
@@ -625,7 +626,7 @@ class Driver:
             button_save_and_close.click()
         except Exception as e:
             print("Couldn't Save 'Family Members' section of Intake")
-            print(e)
+            print(traceback.format_exc())
             return False
 
         # wait until 'Program Enrollment' section loads
@@ -643,7 +644,7 @@ class Driver:
             time.sleep(1)
         except Exception as e:
             print("Couldn't find SALT ORL Enrollment in options")
-            print(e)
+            print(traceback.format_exc())
             return False
 
         # update household data for program enrollment and only enroll current client (not family members)
@@ -689,7 +690,7 @@ class Driver:
             time.sleep(2)
         except Exception as e:
             print("Couldn't update household")
-            print(e)
+            print(traceback.format_exc())
             self.cancel_intake_workflow()
             self.__wait_until_page_fully_loaded("Client Dashboard")
             self.navigate_to_find_client()
@@ -722,7 +723,7 @@ class Driver:
             button_dialog_yes.click()
         except Exception as e:
             print("Couldn't cancel the Intake workflow")
-            print(e)
+            print(traceback.format_exc())
             return False
         return True
     
@@ -740,7 +741,7 @@ class Driver:
             link_enrollments.click()
         except Exception as e:
             print("Couldn't click 'Enrollments' link")
-            print(e)
+            print(traceback.format_exc())
             return False
         return True
     
@@ -756,7 +757,7 @@ class Driver:
                 lambda browser: browser.execute_script('return document.readyState') == 'complete')
         except Exception as e:
             print("Error loading" + page_name + " page")
-            print(e)
+            print(traceback.format_exc())
     
     # Best used for waiting for a page with a list of results to load i.e. Enrollments, Services
     def __wait_until_result_set_fully_loaded(self):
@@ -766,7 +767,7 @@ class Driver:
             )
         except Exception as e:
             print("Error loading frame")
-            print(traceback.format_exc(e))
+            print(traceback.format_exc())
 
     # Focus on iframe with given ID
     def __switch_to_iframe(self, iframe_id):
@@ -777,5 +778,5 @@ class Driver:
             )
         except Exception as e:
             print("Couldn't focus on iframe")
-            print(e)
+            print(traceback.format_exc())
     
