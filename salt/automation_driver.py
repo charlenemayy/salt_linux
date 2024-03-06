@@ -507,9 +507,14 @@ class Driver:
         self.__default_last_assessment()
         self.__wait_until_page_fully_loaded('Universal Data Assessment')
 
-        date_fields_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/span[@class="DateField input-group"]/input'
         dropdowns_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/select'
+        date_fields_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/span[@class="DateField input-group"]/input'
         option_data_not_collected_id = '99'
+        option_orange_county_id = '1'
+        option_place_not_meant_for_habitation_id = '16'
+        button_save_id = 'Renderer_SAVE'
+
+        # INITIAL ASSESSMENT
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_any_elements_located((By.XPATH, date_fields_xpath))
@@ -538,7 +543,7 @@ class Driver:
             dropdown_county_id = '1000006788_Renderer'
             dropdown_county = self.browser.find_element(By.ID, dropdown_county_id)
             if self.__dropdown_empty(dropdown_county):
-                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_county_id, option_data_not_collected_id)
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_county_id, option_orange_county_id)
                 option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
                 option.click()
                 time.sleep(1)
@@ -547,7 +552,7 @@ class Driver:
             dropdown_prior_living_sit_id = '1000006811_Renderer'
             dropdown_prior_living_sit = self.browser.find_element(By.ID, dropdown_prior_living_sit_id)
             if self.__dropdown_empty(dropdown_prior_living_sit):
-                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_prior_living_sit_id, option_data_not_collected_id)
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_prior_living_sit_id, option_place_not_meant_for_habitation_id)
                 option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
                 option.click()
                 time.sleep(1)
@@ -569,10 +574,114 @@ class Driver:
                 field_homeless_start_date.clear()
                 time.sleep(1)
                 field_homeless_start_date.send_keys(service_date)
+                time.sleep(1)
+            
+            dropdown_street_frequency_id = '1000006807_Renderer'
+            dropdown_street_frequency = self.browser.find_element(By.ID, dropdown_street_frequency_id)
+            if self.__dropdown_empty(dropdown_street_frequency):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_street_frequency_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
 
+            dropdown_months_homeless_id = '1000006813_Renderer'
+            dropdown_months_homeless = self.browser.find_element(By.ID, dropdown_months_homeless_id)
+            if self.__dropdown_empty(dropdown_months_homeless):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_months_homeless_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
+
+            # Insurance Status
+            self.__default_last_assessment()
+            self.__wait_until_page_fully_loaded('Universal Data Assessment')
+
+            dropdown_covered_by_health_ins_id = '1000006802_Renderer'
+            dropdown_covered_by_health_ins = self.browser.find_element(By.ID, dropdown_covered_by_health_ins_id)
+            if self.__dropdown_empty(dropdown_covered_by_health_ins):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_covered_by_health_ins_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
+
+            # Save
+            button_save = self.browser.find_element(By.ID, button_save_id)
+            button_save.click()
+            time.sleep(1)
         except Exception as e:
+            print("Couldn't complete initial assessment")
             traceback.format_exc()
-    
+            return False
+
+        # BARRIER ASSESSMENT
+        button_default_assessment_id = 'B1000006792_Renderer'
+        field_identified_date_id = '90688_Renderer'
+        button_save_and_close_id = 'Renderer_SAVEFINISH'
+
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, field_identified_date_id))
+            )
+
+            # sometimes this button isn't available
+            button_default_assessment = self.browser.find_elements(By.ID, button_default_assessment_id)
+            if len(button_default_assessment) > 1:
+                button_default_assessment[0].click()
+                time.sleep(3)
+            
+            dropdowns_xpath = '//table[@id="RendererResultSet"]//tr/td/select[@class="form-control"]'
+            dropdowns = self.browser.find_elements(By.XPATH, dropdowns_xpath)
+
+            # every fouth dropdown is a 'Barrier Present?' field
+            for i in range(0, 28, 4):
+                print(i)
+                dropdown_id = dropdowns[i].get_attribute("id")
+                if self.__dropdown_empty(dropdowns[i]):
+                    dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_id, option_data_not_collected_id)
+                    option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                    option.click()
+                    time.sleep(1)
+
+            # Save
+            button_save_and_close = self.browser.find_element(By.ID, button_save_and_close_id)
+            button_save_and_close.click()
+            time.sleep(2) 
+        except Exception as e:
+            print("Couldn't complete barrier assessment")
+            print(traceback.format_exc())
+            return False
+
+        # DOMESTIC VIOLENCE ASSESSMENT
+        self.__default_last_assessment()
+        self.__wait_until_page_fully_loaded()
+
+        field_assessment_date_id = '11807_Renderer'
+        button_save_id = "Renderer_SAVE"
+
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, field_assessment_date_id))
+            )
+            
+            buttons_domestic_violence_xpath = '//span[@id="11888_Renderer"]//input[@type="radio"]'
+            buttons_domestic_violence = self.browser.find_elements(By.XPATH, buttons_domestic_violence_xpath)
+            is_empty = True
+            for button in buttons_domestic_violence:
+                if button.is_selected():
+                    is_empty = False
+            if is_empty:
+                button[4].click()
+                time.sleep(1)
+
+            # Save
+            button_save = self.browser.find_element(By.ID, button_save_id)
+            button_save.click()
+            time.sleep(1)
+        except Exception as e:
+            print("Couldn't complete domestic violence assessment")
+            print(traceback.format_exc)
+            return False
+
     def __dropdown_empty(self, dropdown):
         selected_option = Select(dropdown).first_selected_option.text
         return True if "SELECT" in selected_option else False
@@ -592,8 +701,6 @@ class Driver:
             print("Couldn't click last assessment button")
             print(traceback.format_exc())
             return False
-        
-
 
     # Updates the date of engagement field in the 'Edit Enrollment' page to be the date of service
     # @param: [list] viable_enrollment_list: list of favorable SALT enrollments, ordered from
