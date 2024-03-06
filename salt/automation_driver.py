@@ -274,6 +274,13 @@ class Driver:
         #     self.__wait_until_result_set_fully_loaded()
 
         self.navigate_to_client_dashboard()
+
+        if not self.enroll_client(service_date):
+            # self.__cancel_intake_workflow()
+            # self.__wait_until_page_fully_loaded("Client Dashboard")
+            # self.navigate_to_find_client()
+            return False
+
         self.navigate_to_service_list()
 
         # start entering services
@@ -490,7 +497,7 @@ class Driver:
             time.sleep(1)
             button_save = self.browser.find_element(By.ID, button_save_id)
             button_save.click()
-            time.sleep(2)
+            time.sleep(1)
         except Exception as e:
             print("Couldn't update household")
             print(traceback.format_exc())
@@ -500,16 +507,17 @@ class Driver:
         return self.__assess_client(service_date)
         
     def __assess_client(self, service_date):
-
-        self.__default_last_assessment()
-        self.__wait_until_page_fully_loaded('Universal Data Assessment')
-
         dropdowns_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/select'
         date_fields_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/span[@class="DateField input-group"]/input'
         option_data_not_collected_id = '99'
         option_orange_county_id = '1'
         option_place_not_meant_for_habitation_id = '16'
         button_save_id = 'Renderer_SAVE'
+        button_default_assessment_id = 'B1000006792_Renderer'
+
+
+        self.__default_last_assessment(button_default_assessment_id)
+        self.__wait_until_page_fully_loaded('Universal Data Assessment')
 
         # INITIAL ASSESSMENT
         try:
@@ -520,12 +528,8 @@ class Driver:
             # Client Information
             field_assessment_date_id = '1000006788_Renderer'
             field_assessment_date = self.browser.find_element(By.ID, field_assessment_date_id)
-            print("Text:", field_assessment_date.text)
-            print("Value:", field_assessment_date.get_attribute("value"))
             field_assessment_date.click()
-            time.sleep(1)
             field_assessment_date.clear()
-            time.sleep(1)
             field_assessment_date.send_keys(service_date)
 
             dropdown_disabling_condition_id = '1000006806_Renderer'
@@ -534,7 +538,7 @@ class Driver:
                 self.__select_assessment_dropdown_option(dropdown_disabling_condition, option_data_not_collected_id)
 
             # Enrollment CoC
-            dropdown_county_id = '1000006788_Renderer'
+            dropdown_county_id = '1000006849_Renderer'
             dropdown_county = self.browser.find_element(By.ID, dropdown_county_id)
             if self.__dropdown_empty(dropdown_county):
                 self.__select_assessment_dropdown_option(dropdown_county, option_orange_county_id)
@@ -552,8 +556,10 @@ class Driver:
 
             field_homeless_start_date_id = '1000006795_Renderer'
             field_homeless_start_date = self.browser.find_element(By.ID,field_homeless_start_date_id)
-            field_value = field_assessment_date.text
-            if field_value == "":
+            field_value = field_assessment_date.get_property("value")
+            str = field_value.replace("/", "")
+            # if its the date of service, it means the field is empty
+            if service_date in str:
                 field_homeless_start_date.click()
                 time.sleep(1)
                 field_homeless_start_date.clear()
@@ -572,7 +578,8 @@ class Driver:
                 self.__select_assessment_dropdown_option(dropdown_months_homeless, option_data_not_collected_id)
 
             # Insurance Status
-            self.__default_last_assessment()
+            button_default_assessment_id = 'B1000006761_Renderer'
+            self.__default_last_assessment(button_default_assessment_id)
             self.__wait_until_page_fully_loaded('Universal Data Assessment')
 
             dropdown_covered_by_health_ins_id = '1000006802_Renderer'
@@ -586,7 +593,7 @@ class Driver:
             time.sleep(1)
         except Exception as e:
             print("Couldn't complete initial assessment")
-            traceback.format_exc()
+            print(traceback.format_exc())
             return False
 
         # BARRIER ASSESSMENT
@@ -610,7 +617,6 @@ class Driver:
 
             # every fouth dropdown is a 'Barrier Present?' field
             for i in range(0, 28, 4):
-                print(i)
                 if self.__dropdown_empty(dropdowns[i]):
                     self.__select_assessment_dropdown_option(dropdowns[i], option_data_not_collected_id)
 
@@ -624,11 +630,12 @@ class Driver:
             return False
 
         # DOMESTIC VIOLENCE ASSESSMENT
-        self.__default_last_assessment()
-        self.__wait_until_page_fully_loaded()
-
+        button_default_assessment_id = 'B48899_Renderer'
         field_assessment_date_id = '11807_Renderer'
         button_save_id = "Renderer_SAVE"
+
+        self.__default_last_assessment(button_default_assessment_id)
+        self.__wait_until_page_fully_loaded("Domestic Violence Assessment")
 
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -642,7 +649,7 @@ class Driver:
                 if button.is_selected():
                     is_empty = False
             if is_empty:
-                button[4].click()
+                buttons_domestic_violence[4].click()
                 time.sleep(1)
 
             # Save
@@ -655,13 +662,14 @@ class Driver:
             return False
 
         # INCOME ASSESSMENT
-        self.__default_last_assessment()
-        self.__wait_until_page_fully_loaded()
-
         field_assessment_date_id = '92172_Renderer'
         dropdown_income_id = '92173_Renderer'
         dropdown_non_cash_benefits_id = '92174_Renderer'
         button_save_id = "Renderer_SAVE"
+        button_default_assessment_id = 'B92169_Renderer'
+
+        self.__default_last_assessment(button_default_assessment_id)
+        self.__wait_until_page_fully_loaded("Income Assessment")
 
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -685,14 +693,14 @@ class Driver:
             return False
 
         # CURRENT LIVING SITUATION ASSESSMENT
-        self.__wait_until_page_fully_loaded()
+        self.__wait_until_page_fully_loaded("Current Living Situation Assessment")
 
         dropdown_living_sit_id = '107051_Renderer'
         button_save_id = "Renderer_SAVE"
 
         try:
             WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.ID, dropdown_prior_living_sit_id))
+                EC.element_to_be_clickable((By.ID, dropdown_living_sit_id))
             )
             dropdown_living_sit = self.browser.find_element(By.ID, dropdown_living_sit_id)
             self.__select_assessment_dropdown_option(dropdown_living_sit, option_place_not_meant_for_habitation_id)
@@ -707,11 +715,12 @@ class Driver:
             return False
 
         # TRANSLATION ASSISTANCE ASSESSMENT
-        self.__default_last_assessment()
-        self.__wait_until_page_fully_loaded()
-
         dropdown_translation_id = '107564_Renderer'
         button_save_id = "Renderer_SAVE"
+        button_default_assessment_id = 'B107569_Renderer'
+
+        self.__default_last_assessment(button_default_assessment_id)
+        self.__wait_until_page_fully_loaded("Translation Assistance Assessment")
 
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -731,7 +740,7 @@ class Driver:
             return False
 
         # FINISH BUTTON
-        self.__wait_until_page_fully_loaded()
+        self.__wait_until_page_fully_loaded("Finish Page")
         button_finish_id = 'FinishButton'
 
         try:
@@ -761,9 +770,7 @@ class Driver:
         option.click()
         time.sleep(1)
 
-    def __default_last_assessment(self):
-        button_default_assessment_id = 'B1000006792_Renderer'
-
+    def __default_last_assessment(self, button_default_assessment_id):
         # click default last assessment button and wait for page to load
         try:
             WebDriverWait(self.browser, self.wait_time).until(
