@@ -491,6 +491,7 @@ class Driver:
             button_save = self.browser.find_element(By.ID, button_save_id)
             button_save.click()
             time.sleep(2)
+            self.__assess_client(service_date)
         except Exception as e:
             print("Couldn't update household")
             print(traceback.format_exc())
@@ -500,7 +501,99 @@ class Driver:
             return False
         
         # cancel the workflow assessment -- not enough information has been provided for us to do an assessment
-        return self.__cancel_intake_workflow()
+        # return self.__cancel_intake_workflow()
+    def __assess_client(self, service_date):
+
+        self.__default_last_assessment()
+        self.__wait_until_page_fully_loaded('Universal Data Assessment')
+
+        date_fields_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/span[@class="DateField input-group"]/input'
+        dropdowns_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/select'
+        option_data_not_collected_id = '99'
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_any_elements_located((By.XPATH, date_fields_xpath))
+            )
+
+            # Client Information
+            field_assessment_date_id = '1000006788_Renderer'
+            field_assessment_date = self.browser.find_element(By.ID, field_assessment_date_id)
+            print("Text:", field_assessment_date.text)
+            print("Value:", field_assessment_date.get_attribute("value"))
+            field_assessment_date.click()
+            time.sleep(1)
+            field_assessment_date.clear()
+            time.sleep(1)
+            field_assessment_date.send_keys(service_date)
+
+            dropdown_disabling_condition_id = '1000006806_Renderer'
+            dropdown_disabling_condition = self.browser.find_element(By.ID, dropdown_disabling_condition_id)
+            if self.__dropdown_empty(dropdown_disabling_condition):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_disabling_condition_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
+
+            # Enrollment CoC
+            dropdown_county_id = '1000006788_Renderer'
+            dropdown_county = self.browser.find_element(By.ID, dropdown_county_id)
+            if self.__dropdown_empty(dropdown_county):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_county_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
+
+            # Living Situation
+            dropdown_prior_living_sit_id = '1000006811_Renderer'
+            dropdown_prior_living_sit = self.browser.find_element(By.ID, dropdown_prior_living_sit_id)
+            if self.__dropdown_empty(dropdown_prior_living_sit):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_prior_living_sit_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
+
+            dropdown_length_of_stay_id = '1000006812_Renderer'
+            dropdown_length_of_stay = self.browser.find_element(By.ID, dropdown_length_of_stay_id)
+            if self.__dropdown_empty(dropdown_length_of_stay):
+                dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_length_of_stay_id, option_data_not_collected_id)
+                option = self.browser.find_element(By.XPATH, dropdown_option_xpath)
+                option.click()
+                time.sleep(1)
+
+            field_homeless_start_date_id = '1000006795_Renderer'
+            field_homeless_start_date = self.browser.find_element(By.ID,field_homeless_start_date_id)
+            field_value = field_assessment_date.text
+            if field_value == "":
+                field_homeless_start_date.click()
+                time.sleep(1)
+                field_homeless_start_date.clear()
+                time.sleep(1)
+                field_homeless_start_date.send_keys(service_date)
+
+        except Exception as e:
+            traceback.format_exc()
+    
+    def __dropdown_empty(self, dropdown):
+        selected_option = Select(dropdown).first_selected_option.text
+        return True if "SELECT" in selected_option else False
+    
+    def __default_last_assessment(self):
+        button_default_assessment_id = 'B1000006792_Renderer'
+
+        # click default last assessment button and wait for page to load
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, button_default_assessment_id))
+            )
+            button_default_assessment = self.browser.find_element(By.ID, button_default_assessment_id)
+            button_default_assessment.click()
+            time.sleep(3)
+        except Exception as e:
+            print("Couldn't click last assessment button")
+            print(traceback.format_exc())
+            return False
+        
+
 
     # Updates the date of engagement field in the 'Edit Enrollment' page to be the date of service
     # @param: [list] viable_enrollment_list: list of favorable SALT enrollments, ordered from
@@ -836,4 +929,3 @@ class Driver:
         except Exception as e:
             print("Couldn't focus on iframe")
             print(traceback.format_exc())
-    
