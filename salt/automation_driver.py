@@ -274,13 +274,6 @@ class Driver:
         #     self.__wait_until_result_set_fully_loaded()
 
         self.navigate_to_client_dashboard()
-
-        if not self.enroll_client(service_date):
-            # self.__cancel_intake_workflow()
-            # self.__wait_until_page_fully_loaded("Client Dashboard")
-            # self.navigate_to_find_client()
-            return False
-
         self.navigate_to_service_list()
 
         # start entering services
