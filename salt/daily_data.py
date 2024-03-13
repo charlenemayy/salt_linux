@@ -3,6 +3,12 @@ import re
 import automation_driver
 import pandas as pd
 
+'''
+Processes the data from the SALT Web App and preps it for Selenium automation 
+in automation_driver.py. Uses pandas to clean excel data retrieved from SALT 1.0.
+This will likely be very subject to change as the report style changes with 
+SALT 2.0. 
+'''
 class DailyData:
     # Item Keys - Clothing, Grooming, Food, Bedding
     service_item_codes = ['Shower', 'Laundry']
@@ -153,7 +159,7 @@ class DailyData:
         self.df = self.df.reindex(columns=reorder)
 
     # Convert row values to proper data types and return a dictionary
-    def __get_service_totals(self, row, row_index):
+    def __get_service_totals(self, row):
         services_dict = {}
 
         if isinstance(row['Service'], float):
@@ -195,7 +201,7 @@ class DailyData:
 
     # Collect total number of items under each category for each client
     # and store all items into a dictionary
-    def __count_item_totals(self, row, row_index, services_dict):
+    def __count_item_totals(self, row, services_dict):
         items_dict = {}
         row_items = row['Items']
 
