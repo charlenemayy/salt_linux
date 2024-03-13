@@ -1,5 +1,4 @@
 import argparse
-import pandas as pd
 import daily_data
 import datetime
 import warnings
@@ -13,33 +12,22 @@ parser.add_argument("-a", "--automate", action='store_true') # Outputs a spreads
 parser.add_argument("-m", "--manual", action='store_true') # Outputs a readable spreadsheet for data to be entered manually
 
 args = parser.parse_args()
-
 if not args.filename:
        print("ERROR: Please add a file to read by typing '-f' before your filename")
        quit()
 
 start_time = datetime.datetime.now()
 
-df = pd.read_excel(io=args.filename,
-                     dtype={'': object,
-                            'DoB': object,
-                            'Client Name': object,
-                            'HMIS ID': object,
-                            'Race': object,
-                            'Ethnicity': object,
-                            'Verification of homeless': object,
-                            'Gross monthly income': object,
-                            'Service': object,
-                            'Items': object})
-
-dd = daily_data.DailyData(df, args.filename, args.automate, args.manual, args.output, args.listitems)
+dd = daily_data.DailyData(args.filename, args.automate, args.manual, args.output, args.listitems)
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     dd.read_and_process_data()
+    # upload to drive
 
 if args.manual:
        dd.export_manual_entry_data("~/Downloads/")
+       # upload to drive
 
 end_time = datetime.datetime.now()
 difference = end_time - start_time

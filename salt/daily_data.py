@@ -11,31 +11,38 @@ class DailyData:
     food_item_codes = ['SBG']
     bedding_item_codes = ['Blankets']
 
-    # Login Info
-    username = "charlene@saltoutreach.org"
-    password = "1ntsygtmtir!CL"
-
-    def __init__(self, df, filename, automate, manual, show_output, list_items):
-        self.df = df
+    def __init__(self, filename, automate, manual, show_output, list_items):
         self.automate = automate
         self.manual = manual
         self.show_output = show_output
         self.list_items = list_items
         self.unique_items = set()
         self.filename = filename
+        self.df = pd.read_excel(io=filename,
+                             dtype={'': object,
+                                    'DoB': object,
+                                    'Client Name': object,
+                                    'HMIS ID': object,
+                                    'Race': object,
+                                    'Ethnicity': object,
+                                    'Verification of homeless': object,
+                                    'Gross monthly income': object,
+                                    'Service': object,
+                                    'Items': object})
 
-        # on successful automated entry for a client, drop the row from this dataframe
         self.failed_df = self.df.copy()
-                
-        if self.automate:
-            self.driver = automation_driver.Driver()
-            self.driver.open_clienttrack()
-            self.driver.login_clienttrack(DailyData.username, DailyData.password)
+        self.driver = automation_driver.Driver()
 
     # Parse each row and process client data
     def read_and_process_data(self):
+        if self.automate:
+            self.driver.open_clienttrack()
+            if not self.driver.login_clienttrack():
+                return
+
         self.__clean_dataframe(['Race', 'Ethnicity', 'Verification of homeless', 'Gross monthly income'], 
                                ['', 'HMIS ID', 'Client Name', 'Service', 'Items', 'DoB'])
+
         # add new column combining items and services columns
         self.df['Services'] = ""
         for row_index in range(0, len(self.df)):
