@@ -8,7 +8,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import difflib
 import time
 import traceback
-import json
 
 '''
 Responsible for all automation, all the data should be processed and cleaned before
@@ -39,22 +38,9 @@ class Driver:
     def open_clienttrack(self):
         self.browser.get('https://clienttrack.eccovia.com/login/HSNCFL')
 
-    def login_clienttrack(self):
+    def login_clienttrack(self, username, password):
         field_username = self.browser.find_element(By.ID, "UserName")
         field_password = self.browser.find_element(By.ID, "Password")
-
-        # get username and password from json file
-        try:
-            filename = "./salt/settings.json"
-            f = open(filename)
-            data = json.load(f)
-        except Exception as e:
-            print("ERROR: 'settings.json' file cannot be found, please see README for details")
-            return False
-
-        login = data["login_info"][0]
-        username = login["username"]
-        password = login["password"]
 
         field_username.send_keys(username)
         field_password.send_keys(password)

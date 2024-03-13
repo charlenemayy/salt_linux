@@ -2,6 +2,7 @@ from datetime import datetime
 import re
 import automation_driver
 import pandas as pd
+import json
 
 '''
 Processes the data from the SALT Web App and preps it for Selenium automation 
@@ -38,12 +39,26 @@ class DailyData:
 
         self.failed_df = self.df.copy()
 
+        try:
+            filename = "./salt/settings.json"
+            f = open(filename)
+            data = json.load(f)
+        except Exception as e:
+            print("ERROR: 'settings.json' file cannot be found, please see README for details")
+            quit()
+
+        settings = data["data"][0]
+        self.username = settings["hmis_username"]
+        self.password = settings["hmis_password"]
+        self.output_path = settings["output_path"]
+
     # Parse each row and process client data
     def read_and_process_data(self):
         if self.automate:
             self.driver = automation_driver.Driver()
             self.driver.open_clienttrack()
-            if not self.driver.login_clienttrack():
+            if not self.driver.login_clienttrack(self.username, self.password):
+                print("Could not login successfully")
                 return
 
         self.__clean_dataframe(['Race', 'Ethnicity', 'Verification of homeless', 'Gross monthly income'], 
@@ -109,7 +124,9 @@ class DailyData:
             print(self.unique_items)
 
         # Make data more readable for manual data entry
-        self.__clean_dataframe(['Service', 'Items'], ['', 'HMIS ID', 'Client Name', 'Services', 'DoB'])
+        if self.manual:
+            self.__clean_dataframe(['Service', 'Items'], ['', 'HMIS ID', 'Client Name', 'Services', 'DoB'])
+            self.__export_manual_entry_data()
 
     def __automate_service_entry(self, client_dict, row_index):
         print("\nEntering Client:" + client_dict['First Name'], client_dict['Last Name'])
@@ -150,7 +167,7 @@ class DailyData:
         # remove client from list of failed automated entries
         self.failed_df = self.failed_df.drop([row_index])
         print("Success! " + str(len(self.failed_df.index)) + " entries remaining")
-        self.export_failed_automation_data("~/Downloads/")
+        self.__export_failed_automation_data()
 
     # Remove unecessary columns and reorganize for easier entry
     def __clean_dataframe(self, drop_columns, reorder_columns):
@@ -346,17 +363,17 @@ class DailyData:
         return date
 
     # Export cleaned and readable spreadsheet for data to be entered manually
-    def export_manual_entry_data(self, output_path):
+    def __export_manual_entry_data(self):
         # get date from original file and output into new excel sheet
         date = self.__get_date_from_filename(self.filename)
         output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
 
         # format: '01 Jan 2024.xlsx'
-        self.df.to_excel(output_path + output_name + ".xlsx", sheet_name=output_name)
+        self.df.to_excel(self.output_path + output_name + ".xlsx", sheet_name=output_name)
 
     # Export a sheet of the failed automated entries in their original format
     # This way we can keep looping the failed entries and try again
-    def export_failed_automation_data(self, output_path):
+    def __export_failed_automation_data(self):
         # get date from original file and output into new excel sheet
         date = self.__get_date_from_filename(self.filename)
         output_name = ("Failed Entries - " 
@@ -365,4 +382,4 @@ class DailyData:
                        + str(date.strftime('%Y')))
 
         # create sheet for remaining clients that need to be entered and could not be automated
-        self.failed_df.to_excel(output_path + output_name + ".xlsx", sheet_name = "Failed Entries Report - " + output_name)
+        self.failed_df.to_excel(self.output_path + output_name + ".xlsx", sheet_name = "Failed Entries Report - " + output_name)

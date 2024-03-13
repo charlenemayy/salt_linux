@@ -25,10 +25,6 @@ with warnings.catch_warnings():
     dd.read_and_process_data()
     # upload to drive
 
-if args.manual:
-       dd.export_manual_entry_data("~/Downloads/")
-       # upload to drive
-
 end_time = datetime.datetime.now()
 difference = end_time - start_time
 diff_in_seconds = difference.total_seconds()
