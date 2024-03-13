@@ -37,11 +37,11 @@ class DailyData:
                                     'Items': object})
 
         self.failed_df = self.df.copy()
-        self.driver = automation_driver.Driver()
 
     # Parse each row and process client data
     def read_and_process_data(self):
         if self.automate:
+            self.driver = automation_driver.Driver()
             self.driver.open_clienttrack()
             if not self.driver.login_clienttrack():
                 return
@@ -71,8 +71,8 @@ class DailyData:
                 self.df.at[row_index, 'DoB'] = client_dict['DoB']
 
             # get total number of services and items
-            services_dict = self.__get_service_totals(row, row_index)
-            items_dict = self.__count_item_totals(row, row_index, services_dict)
+            services_dict = self.__get_service_totals(row)
+            items_dict = self.__count_item_totals(row, services_dict)
             client_dict['Services'] = {**services_dict, **items_dict}
             # update sheet for readability
             self.df.at[row_index, 'Services'] = self.__clean_dictionary_string(str(client_dict['Services']))

@@ -122,6 +122,7 @@ class Driver:
                 return True
 
             print("Client Name is not a match")
+            print("Similarity Score:", max(final_score_one, final_score_two))
             print("Current Client: " + first_name, last_name)
             print("Loaded Client: " + dashboard_first_name, dashboard_last_name)
             return False
