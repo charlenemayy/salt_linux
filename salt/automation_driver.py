@@ -314,9 +314,14 @@ class Driver:
                                 break
                 # enroll the client and try again, enrollment should be found in recursive call
                 if not enrollment_found:
+                    '''
+                    print("Client is not enrolled")
+                    return False
+                    '''
                     print("Client is not enrolled -- Enrolling client")
                     self.navigate_to_client_dashboard()
                     if not self.enroll_client(service_date):
+                        print("Couldn't enroll client successfully -- Canceling")
                         self.__cancel_intake_workflow()
                         self.__wait_until_page_fully_loaded("Client Dashboard")
                         self.navigate_to_find_client()
