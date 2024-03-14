@@ -223,7 +223,6 @@ class Driver:
                             if final_score >= min_score and final_score > result_max_score:
                                 result_max_score = final_score
                                 stored_result = result
-                        print()
             # For Loop End
 
             if result_max_score > 0:
