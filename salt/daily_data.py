@@ -1,6 +1,6 @@
 from datetime import datetime
 import re
-import automation_driver
+import hmis_driver
 import pandas as pd
 import json
 
@@ -55,7 +55,7 @@ class DailyData:
     # Parse each row and process client data
     def read_and_process_data(self):
         if self.automate:
-            self.driver = automation_driver.Driver()
+            self.driver = hmis_driver.Driver()
             self.driver.open_clienttrack()
             if not self.driver.login_clienttrack(self.username, self.password):
                 print("Could not login successfully")

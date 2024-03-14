@@ -10,6 +10,8 @@ be adjusted if being run on a Windows machine.
         {
             "hmis_username" : "your_username",
             "hmis_password" : "your_password"
+            "salt_username" : "your_username",
+            "salt_password" : "your_password",
             "output_path" : "your_filepath"
         }
     ]

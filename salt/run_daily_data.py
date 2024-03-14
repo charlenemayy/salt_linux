@@ -19,11 +19,9 @@ if not args.filename:
 start_time = datetime.datetime.now()
 
 dd = daily_data.DailyData(args.filename, args.automate, args.manual, args.output, args.listitems)
-
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     dd.read_and_process_data()
-    # upload to drive
 
 end_time = datetime.datetime.now()
 difference = end_time - start_time
