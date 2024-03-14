@@ -30,7 +30,7 @@ class Driver:
 
         firefox_service = Service("/opt/homebrew/bin/geckodriver")
         
-        self.browser = Firefox(options=firefox_options, service=firefox_service)
+        self.browser = Firefox(options=firefox_options)
 
     def open_saltwebapp(self):
         self.browser.get('https://saltoutreachapp.com/')
@@ -103,7 +103,7 @@ class Driver:
     
     def download_daily_report_by_client(self):
         self.__wait_until_page_fully_loaded('SALT Homepage')
-        time.sleep(10)
+        time.sleep(8)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.XPATH, '//form[@action="https://saltoutreachapp.com/dashboard/export"]/button'))
@@ -116,8 +116,9 @@ class Driver:
             print(e)
             return False
         print("Success! Daily report downloaded")
+        self.__wait_until_page_fully_loaded('SALT Homepage')
+        self.browser.quit()
         return True
-
     '''
     ------------------------ HELPER ------------------------
     '''
