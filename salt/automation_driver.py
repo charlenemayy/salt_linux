@@ -465,16 +465,34 @@ class Driver:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.XPATH, dropdown_rel_to_head_of_household_xpath))
             )
-            # TODO: fix code for when household has multiple members -- rare case
-            # find correct household member (check by name?)
-            # click 'SELF' option
+            # if the household has multiple members, look for the current client to enroll
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
-            if len(rows_family_members) > 1:
-                print("More than one family member to enroll, please enroll manually")
-                return False
+
+            if len(rows_family_members) < 2:
+                field_project_date = self.browser.find_elements(By.XPATH, field_project_date_xpath)[2]
+                field_date_of_engagement = self.browser.find_elements(By.XPATH, field_date_of_engagement_xpath)[4]
+            else:
+                self.browser.switch_to.default_content()
+                label_client_name_xpath = '//span[@aria-label="Name"]'
+                client_name = self.browser.find_element(By.XPATH, label_client_name_xpath).text
+                self.__switch_to_iframe(self.iframe_id)
+
+                stored_row = rows_family_members[0]
+                max_score = 0
+                for row in rows_family_members:
+                    row_name = row.find_element(By.XPATH, "./th").text
+                    score = self.__similar(row_name, client_name)
+                    if score > max_score:
+                        stored_row = row
+                        max_score = score
+
+                option_self = stored_row.find_element(By.XPATH, './/select//option[@value="SL"]')
+                option_self.click()
+
+                field_project_date = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[2]
+                field_date_of_engagement = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[4]
 
             time.sleep(1)
-            field_project_date = self.browser.find_elements(By.XPATH, field_project_date_xpath)[2]
             self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
             time.sleep(1)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_project_date))
@@ -485,7 +503,6 @@ class Driver:
             field_project_date.send_keys(service_date)
             time.sleep(1)
 
-            field_date_of_engagement = self.browser.find_elements(By.XPATH, field_date_of_engagement_xpath)[3]
             self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
             time.sleep(1)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))

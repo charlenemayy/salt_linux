@@ -13,7 +13,7 @@ SALT 2.0.
 class DailyData:
     # Item Keys - Clothing, Grooming, Food, Bedding
     service_item_codes = ['Shower', 'Laundry']
-    clothing_item_codes = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks']
+    clothing_item_codes = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks', 'Belts']
     grooming_item_codes = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons']
     food_item_codes = ['SBG']
     bedding_item_codes = ['Blankets']
@@ -376,7 +376,7 @@ class DailyData:
     def __export_failed_automation_data(self):
         # get date from original file and output into new excel sheet
         date = self.__get_date_from_filename(self.filename)
-        output_name = ("Failed Entries - " 
+        output_name = ("Failed_entries_ " 
                        + str(date.strftime('%m')) + '-' 
                        + str(date.strftime('%d')) + '-' 
                        + str(date.strftime('%Y')))
