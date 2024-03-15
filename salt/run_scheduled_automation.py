@@ -19,7 +19,6 @@ This was developed based on my personal environment in MacOS and will not work i
 # SETTINGS
 run_count = 3 # amount of times to run the failed entry automation
 
-
 # grab output path from settings.json
 try:
     filename = "./salt/settings.json"
@@ -44,28 +43,28 @@ else:
     yesterday = date.today() - timedelta(days=1)
     date_str = datetime.fromordinal(yesterday.toordinal()).strftime("%m-%d-%Y")
 
-# check if report has already been downloaded
-files = os.listdir(output_path)
-report_filename = "Report_by_client_" + date_str + ".xlsx"
-
-# download yesterday's report
-if report_filename not in files:
-    print("RUNNING: Downloading yesterday's report from the SALT Web App")
-    subprocess.run(["/usr/bin/python3 salt/run_daily_report.py -d {0}".format(date_str)], shell=True)
-    time.sleep(5)
-
-# double check that report has been downloaded / exists
-report_path = output_path + report_filename
-if not os.path.exists(report_path):
-    print("ERROR: Downloaded report from SALT cannot be found")
-    quit()
-
-# download pretty xlsx file to upload to drive
-print("RUNNING: Processing simplified report file")
-subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -f {0} -m".format(report_path)], shell=True)
-
-# start first run of automation
 if not args.skipfirstrun:
+    # check if report has already been downloaded
+    files = os.listdir(output_path)
+    report_filename = "Report_by_client_" + date_str + ".xlsx"
+
+    # download yesterday's report
+    if report_filename not in files:
+        print("RUNNING: Downloading report from the SALT Web App")
+        subprocess.run(["/usr/bin/python3 salt/run_daily_report.py -d {0}".format(date_str)], shell=True)
+        time.sleep(5)
+
+    # double check that report has been downloaded / exists
+    report_path = output_path + report_filename
+    if not os.path.exists(report_path):
+        print("ERROR: Downloaded report from SALT cannot be found")
+        quit()
+
+    # download pretty xlsx file to upload to drive
+    print("RUNNING: Processing simplified report file")
+    subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -f {0} -m".format(report_path)], shell=True)
+
+    # start first run of automation
     print("RUNNING: Starting first run of automation")
     subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -f {0} -a".format(report_path)], shell=True)
 
