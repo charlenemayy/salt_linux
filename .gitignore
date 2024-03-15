@@ -1,2 +1,5 @@
 salt/settings.json
 geckodriver.log
+client_secrets.json
+credentials.json
+settings.yaml
