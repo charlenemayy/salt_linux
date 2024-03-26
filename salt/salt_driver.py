@@ -117,7 +117,7 @@ class Driver:
             return False
         print("Success! Daily report downloaded")
         self.__wait_until_page_fully_loaded('SALT Homepage')
-        self.browser.quit()
+        # self.browser.quit()
         return True
     '''
     ------------------------ HELPER ------------------------
