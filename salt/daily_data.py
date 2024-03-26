@@ -18,10 +18,14 @@ class DailyData:
     food_item_codes = ['SBG']
     bedding_item_codes = ['Blankets']
 
-    def __init__(self, filename, automate, manual, show_output, list_items):
+    # Locations
+    location_codes = ["SEM", "ORL"]
+
+    def __init__(self, filename, automate, manual, show_output, location, list_items):
         self.automate = automate
         self.manual = manual
         self.show_output = show_output
+        self.location = location if location else "ORL"
         self.list_items = list_items
         self.unique_items = set()
         self.filename = filename
@@ -151,15 +155,18 @@ class DailyData:
         
         # STEP TWO: ENTER SERVICES FOR CLIENT
         # order matters - from most desirable option to last
-        salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
-                                 "SALT Outreach-ORN ESG-CV Street Outreach",
-                                 "SALT Outreach-ORN PSH Supportive Services",
-                                 "SALT Outreach-ORL CDBG Services Only"]
+        if self.location == "SEM":
+            salt_enrollment_names = ["SALT Outreach-SEM Street Outreach"]
+        else:
+            salt_enrollment_names = ["SALT Outreach-ORL ESG Street Outreach", 
+                                     "SALT Outreach-ORN ESG-CV Street Outreach",
+                                     "SALT Outreach-ORN PSH Supportive Services",
+                                     "SALT Outreach-ORL CDBG Services Only"]
         date = self.__get_date_from_filename(self.filename)
         service_date = str(date.strftime('%m%d%Y'))
 
         # enter client services for client - expects date with no non-numeric values (no dashes, etc.)``
-        success = self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'])
+        success = self.driver.enter_client_services(salt_enrollment_names, service_date, client_dict['Services'], self.location)
         if not success:
             print("Client services could not be entered into the system:")
             print(client_dict)

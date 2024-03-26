@@ -28,12 +28,14 @@ class Driver:
         firefox_options.profile = profile
         firefox_options.desired = desired
 
-        firefox_service = Service("/opt/homebrew/bin/geckodriver")
-        
         self.browser = Firefox(options=firefox_options)
 
-    def open_saltwebapp(self):
-        self.browser.get('https://saltoutreachapp.com/')
+    def open_saltwebapp(self, location):
+        if location == "ORL": 
+            self.browser.get('https://saltoutreachapp.com/')
+        else:
+            self.browser.get('https://sanford.saltoutreachapp.com/')
+
 
     def login_saltwebapp_google(self, username, password):
         try:

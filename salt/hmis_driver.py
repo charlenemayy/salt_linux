@@ -242,7 +242,7 @@ class Driver:
     #         [str] service_date: date of service
     #         [dict] services_dict: dictionary of services to be entered
     # @return: [bool] success / fail
-    def enter_client_services(self, viable_enrollment_list, service_date, services_dict):
+    def enter_client_services(self, viable_enrollment_list, service_date, services_dict, location):
         button_add_new_service_id = "Renderer_1000000216"
         dropdown_enrollment_id = "1000007089_Renderer"
         dropdown_service_id = "1000007094_Renderer"
@@ -321,7 +321,7 @@ class Driver:
                     '''
                     print("Client is not enrolled -- Enrolling client")
                     self.navigate_to_client_dashboard()
-                    if not self.enroll_client(service_date):
+                    if not self.enroll_client(service_date, location):
                         print("Couldn't enroll client successfully -- Canceling")
                         self.__cancel_intake_workflow()
                         self.__wait_until_page_fully_loaded("Client Dashboard")
@@ -369,19 +369,21 @@ class Driver:
     # Enrolls the client into the latest SALT program
     # @param: [str] service_date: date of service
     # @return: [bool] success / fail
-    def enroll_client(self, service_date):
+    def enroll_client(self, service_date, location):
         button_new_enrollment_id = "Renderer_1000000248"
         dropdown_veteran_status_id = "1000006680_Renderer"
         option_data_not_collected_value = "99"
         button_finish_id = "Renderer_SAVE"
         button_save_and_close_id = "Renderer_SAVEFINISH"
         dropdown_project_id = "1000004260_Renderer"
-        option_salt_orl_enrollment_value = "1217"
         dropdown_rel_to_head_of_household_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/select'
         field_project_date_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]//tr/td/span[@class="DateField input-group"]/input'
         button_save_id = "Renderer_SAVE"
         table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
+
+        # 1217 for downtown, 1157 for sanford
+        option_salt_enrollment_value = "1217" if location == "ORL" else "1157"
 
         self.navigate_to_enrollment_list()
 
@@ -445,12 +447,11 @@ class Driver:
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Intake - Program Enrollment')
         
-        # select 1217 - SALT Outreach - ORL ESG Street Outreach:SO
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.element_to_be_clickable((By.ID, dropdown_project_id))
             )
-            dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_project_id, option_salt_orl_enrollment_value)
+            dropdown_option_xpath = '//select[@id="%s"]//option[@value="%s"]' %(dropdown_project_id, option_salt_enrollment_value)
             option_salt_orl = self.browser.find_element(By.XPATH, dropdown_option_xpath)
             option_salt_orl.click()
             time.sleep(1)

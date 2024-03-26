@@ -5,9 +5,10 @@ from datetime import datetime
 '''
 class DailyReport:
 
-    def __init__(self, date):
+    def __init__(self, date, location):
         self.driver = salt_driver.Driver()
         self.date = date #MM-DD-YYYY
+        self.location = location if location else "ORL"
 
         try:
             filename = "./salt/settings.json"
@@ -23,7 +24,7 @@ class DailyReport:
         self.output_path = settings["output_path"]
     
     def download_report(self):
-        self.driver.open_saltwebapp()
+        self.driver.open_saltwebapp(self.location)
         if not self.driver.login_saltwebapp_google(self.username, self.password):
             return
         # salt date search requires format YYYY-MM-DD
