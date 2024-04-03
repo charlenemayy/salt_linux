@@ -329,9 +329,10 @@ class Driver:
                         return False
 
                     print("Successfully enrolled client -- Entering services")
-                    return self.enter_client_services(viable_enrollment_list, service_date, services_dict)
+                    return self.enter_client_services(viable_enrollment_list, service_date, services_dict, location)
             except Exception as e:
                 print("Error finding enrollment")
+                print(traceback.format_exc())
                 return False
 
             try:
@@ -527,6 +528,7 @@ class Driver:
         dropdowns_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/select'
         date_fields_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/span[@class="DateField input-group"]/input'
         option_data_not_collected_id = '99'
+        option_no_id = '0'
         option_orange_county_id = '1'
         option_place_not_meant_for_habitation_id = '16'
         button_save_id = 'Renderer_SAVE'
@@ -552,7 +554,7 @@ class Driver:
             dropdown_disabling_condition_id = '1000006806_Renderer'
             dropdown_disabling_condition = self.browser.find_element(By.ID, dropdown_disabling_condition_id)
             if self.__dropdown_empty(dropdown_disabling_condition):
-                self.__select_assessment_dropdown_option(dropdown_disabling_condition, option_data_not_collected_id)
+                self.__select_assessment_dropdown_option(dropdown_disabling_condition, option_no_id)
 
             # Enrollment CoC
             dropdown_county_id = '1000006849_Renderer'
