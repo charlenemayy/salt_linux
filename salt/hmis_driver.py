@@ -504,15 +504,19 @@ class Driver:
             field_project_date.send_keys(service_date)
             time.sleep(1)
 
+            '''
+            # No longer updating date of engagement
             self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
             time.sleep(1)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
-            # field_date_of_engagement.click()
-            # time.sleep(1)
+            field_date_of_engagement.click()
+            time.sleep(1)
             field_date_of_engagement.clear()
             time.sleep(1)
             field_date_of_engagement.send_keys(service_date)
             time.sleep(1)
+            '''
+
             button_save = self.browser.find_element(By.ID, button_save_id)
             button_save.click()
             time.sleep(1)
