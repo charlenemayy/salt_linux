@@ -11,12 +11,21 @@ This will likely be very subject to change as the report style changes with
 SALT 2.0. 
 '''
 class DailyData:
-    # Item Keys - Clothing, Grooming, Food, Bedding
-    service_item_codes = ['Shower', 'Laundry']
-    clothing_item_codes = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks', 'Belts']
-    grooming_item_codes = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons']
-    food_item_codes = ['SBG']
-    bedding_item_codes = ['Blankets']
+    # Orlando Item Keys
+    service_item_codes_orl = ['Shower', 'Laundry']
+    clothing_item_codes_orl = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks', 'Belts']
+    grooming_item_codes_orl = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons', 'Bar Soap']
+    food_item_codes_orl = ['SBG']
+    bedding_item_codes_orl = ['Blankets']
+
+    # Sanford Item Keys
+    service_item_codes_sem = ['Shower', 'Laundry']
+    clothing_item_codes_sem = ['Black Bags', 'Men\'s pant', 'Men\'s Top', 'Shoes', 'Socks', 'Underwear', 
+                           'Women\'s Bottom', 'Women\'s Top', 'Boxer']
+    grooming_item_codes_sem = ['Feminine pads', 'Hygiene Bag', 'Razors', 'Soap bars', 'Tampons', 'Toothbrush',
+                           'Toothpaste', 'Deodorant']
+    food_item_codes_sem = ['Snack', 'Water']
+    bedding_item_codes_sem = []
 
     # Locations
     location_codes = ["SEM", "ORL"]
@@ -229,6 +238,17 @@ class DailyData:
         items_dict = {}
         row_items = row['Items']
 
+        if self.location == 'ORL':
+            clothing_item_codes = DailyData.clothing_item_codes_orl
+            grooming_item_codes = DailyData.grooming_item_codes_orl
+            food_item_codes = DailyData.food_item_codes_orl
+            bedding_item_codes = DailyData.bedding_item_codes_orl
+        elif self.location == 'SEM':
+            clothing_item_codes = DailyData.clothing_item_codes_sem
+            grooming_item_codes = DailyData.grooming_item_codes_sem
+            food_item_codes = DailyData.food_item_codes_sem
+            bedding_item_codes = DailyData.bedding_item_codes_sem
+
         if self.show_output:
             print("Raw Excel Data:")
             print("SERVICES")
@@ -250,7 +270,7 @@ class DailyData:
 
             # Clothing 
             clothing_count = 0
-            for item in DailyData.clothing_item_codes:
+            for item in clothing_item_codes:
                 index = row_items.find(item)
                 if index >= 0:
                     # find num value attributed to item code
@@ -268,7 +288,7 @@ class DailyData:
 
             # Grooming/Hygiene
             grooming_count = 0
-            for item in DailyData.grooming_item_codes:
+            for item in grooming_item_codes:
                 index = row_items.find(item)
                 if index >= 0:
                     # find num value attributed to item code
@@ -300,7 +320,7 @@ class DailyData:
 
             # Food 
             food_count = 0
-            for item in DailyData.food_item_codes:
+            for item in food_item_codes:
                 index = row_items.find(item)
                 if index >= 0:
                     # find num value attributed to item code
@@ -318,7 +338,7 @@ class DailyData:
 
             # Bedding 
             bedding_count = 0
-            for item in DailyData.bedding_item_codes:
+            for item in bedding_item_codes:
                 index = row_items.find(item)
                 if index >= 0:
                     # find num value attributed to item code

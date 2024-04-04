@@ -493,8 +493,11 @@ class Driver:
                 field_project_date = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[2]
                 field_date_of_engagement = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[4]
 
-            time.sleep(1)
-            self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
+            # needs to be scrolled into view if no additional family members
+            if len(rows_family_members) < 2:
+                time.sleep(1)
+                self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
+
             time.sleep(1)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_project_date))
             field_project_date.click()
