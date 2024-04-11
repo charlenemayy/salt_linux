@@ -475,7 +475,8 @@ class Driver:
             else:
                 self.browser.switch_to.default_content()
                 label_client_name_xpath = '//span[@aria-label="Name"]'
-                client_name = self.browser.find_element(By.XPATH, label_client_name_xpath).text
+                str = self.browser.find_element(By.XPATH, label_client_name_xpath).text
+                client_name = str.split(' ')[1] + ", " + str.split(' ')[0]
                 self.__switch_to_iframe(self.iframe_id)
 
                 stored_row = rows_family_members[0]
@@ -529,14 +530,15 @@ class Driver:
             return False
 
         # Assess Client
-        return self.__assess_client(service_date)
+        return self.__assess_client(service_date, location)
         
-    def __assess_client(self, service_date):
+    def __assess_client(self, service_date, location):
         dropdowns_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/select'
         date_fields_xpath = '//table[@class="FormPage"]//td[@class="FieldStyle"]/span[@class="DateField input-group"]/input'
         option_data_not_collected_id = '99'
         option_no_id = '0'
         option_orange_county_id = '1'
+        option_sem_county_id = '2'
         option_place_not_meant_for_habitation_id = '16'
         button_save_id = 'Renderer_SAVE'
         button_default_assessment_id = 'B1000006792_Renderer'
@@ -567,7 +569,8 @@ class Driver:
             dropdown_county_id = '1000006849_Renderer'
             dropdown_county = self.browser.find_element(By.ID, dropdown_county_id)
             if self.__dropdown_empty(dropdown_county):
-                self.__select_assessment_dropdown_option(dropdown_county, option_orange_county_id)
+                option_county_id = option_orange_county_id if location == 'ORL' else option_sem_county_id
+                self.__select_assessment_dropdown_option(dropdown_county, option_county_id)
 
             # Living Situation
             dropdown_prior_living_sit_id = '1000006811_Renderer'
@@ -634,15 +637,17 @@ class Driver:
 
             # sometimes this button isn't available
             button_default_assessment = self.browser.find_elements(By.ID, button_default_assessment_id)
+            already_assessed = False
             if len(button_default_assessment) > 1:
+                already_assessed = True
                 button_default_assessment[0].click()
                 time.sleep(3)
-            
+
             dropdowns_xpath = '//table[@id="RendererResultSet"]//tr/td/select[@class="form-control"]'
             dropdowns = self.browser.find_elements(By.XPATH, dropdowns_xpath)
 
             # every fouth dropdown is a 'Barrier Present?' field
-            for i in range(0, 28, 4):
+            for i in range(0, len(dropdowns), 4):
                 if self.__dropdown_empty(dropdowns[i]):
                     self.__select_assessment_dropdown_option(dropdowns[i], option_data_not_collected_id)
 
@@ -650,6 +655,13 @@ class Driver:
             button_save_and_close = self.browser.find_element(By.ID, button_save_and_close_id)
             button_save_and_close.click()
             time.sleep(2) 
+
+            # depending on the case, it might have to click save and close twice
+            if already_assessed and self.browser.find_elements(By.ID, button_save_and_close_id) > 1:
+                button_save_and_close = self.browser.find_element(By.ID, button_save_and_close_id)
+                button_save_and_close.click()
+                time.sleep(2) 
+
         except Exception as e:
             print("Couldn't complete barrier assessment")
             print(traceback.format_exc())
