@@ -103,19 +103,24 @@ class Driver:
             return False
         return True
     
-    def download_daily_report_by_client(self):
+    def download_daily_report_by_client(self, location):
         self.__wait_until_page_fully_loaded('SALT Homepage')
-        time.sleep(8)
+        if location == "ORL":
+            download_url = "https://saltoutreachapp.com/dashboard/export"
+            time.sleep(8)
+        else:
+            download_url = "https://sanford.saltoutreachapp.com/dashboard/export"
+            time.sleep(3)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.XPATH, '//form[@action="https://saltoutreachapp.com/dashboard/export"]/button'))
+                EC.element_to_be_clickable((By.XPATH, '//form[@action="{}"]/button'.format(download_url)))
             )
-            button_export = self.browser.find_element(By.XPATH, '//form[@action="https://saltoutreachapp.com/dashboard/export"]/button')
+            button_export = self.browser.find_element(By.XPATH, '//form[@action="{}"]/button'.format(download_url))
             button_export.click()
             print("Downloading Report...")
         except Exception as e:
             print("Couldn't download daily report")
-            print(e)
+            print(traceback.format_exc())
             return False
         print("Success! Daily report downloaded")
         self.__wait_until_page_fully_loaded('SALT Homepage')

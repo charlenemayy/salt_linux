@@ -6,7 +6,7 @@ import json
 
 '''
 Processes the data from the SALT Web App and preps it for Selenium automation 
-in automation_driver.py. Uses pandas to clean excel data retrieved from SALT 1.0.
+in hmis_driver.py. Uses pandas to clean excel data retrieved from SALT 1.0.
 This will likely be very subject to change as the report style changes with 
 SALT 2.0. 
 '''
@@ -34,10 +34,14 @@ class DailyData:
         self.automate = automate
         self.manual = manual
         self.show_output = show_output
-        self.location = location if location else "ORL"
         self.list_items = list_items
         self.unique_items = set()
         self.filename = filename
+        self.location = location if location else "ORL"
+        if self.location not in self.location_codes:
+            print("Not a valid location code, please see README for details")
+            quit()
+
         self.df = pd.read_excel(io=filename,
                              dtype={'': object,
                                     'DoB': object,
@@ -49,6 +53,9 @@ class DailyData:
                                     'Gross monthly income': object,
                                     'Service': object,
                                     'Items': object})
+        if self.df.empty:
+            print("No data to enter into HMIS today, closing now")
+            quit()
 
         self.failed_df = self.df.copy()
 
@@ -393,7 +400,7 @@ class DailyData:
     def __export_manual_entry_data(self):
         # get date from original file and output into new excel sheet
         date = self.__get_date_from_filename(self.filename)
-        output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y'))
+        output_name = str(date.strftime('%d')) + ' ' + str(date.strftime('%b')) + ' ' + str(date.strftime('%Y') + " - " + self.location)
 
         # format: '01 Jan 2024.xlsx'
         self.df.to_excel(self.output_path + output_name + ".xlsx", sheet_name=output_name)
@@ -403,7 +410,7 @@ class DailyData:
     def __export_failed_automation_data(self):
         # get date from original file and output into new excel sheet
         date = self.__get_date_from_filename(self.filename)
-        output_name = ("Failed_entries_" 
+        output_name = (self.location + "_Failed_entries_" 
                        + str(date.strftime('%m')) + '-' 
                        + str(date.strftime('%d')) + '-' 
                        + str(date.strftime('%Y')))
