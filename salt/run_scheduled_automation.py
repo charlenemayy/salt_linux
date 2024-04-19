@@ -63,11 +63,11 @@ if not os.path.exists(report_path):
 
 # download pretty xlsx file to upload to drive
 print("RUNNING: Processing simplified report file")
-subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -f {0} -m".format(report_path)], shell=True)
+subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -l SEM -f {0} -m".format(report_path)], shell=True)
 
 # start first run of automation
 print("RUNNING: Starting first run of automation for SANFORD")
-subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -f {0} -a".format(report_path)], shell=True)
+subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -l SEM -f {0} -a".format(report_path)], shell=True)
 
 # run the failed entries
 location = "SEM"
@@ -78,7 +78,7 @@ if not os.path.exists(failed_report_path):
     print("Failed entry report for SANFORD from SALT cannot be found, continuing data entry")
 else:
     print("\nRUNNING: Automating failed SANFORD entries".format(run_count-1-i))
-    subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -f {0} -a".format(failed_report_path)], shell=True)
+    subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -l SEM -f {0} -a".format(failed_report_path)], shell=True)
 
     # upload final instance of the failed entry report to drive
     gauth = GoogleAuth() 

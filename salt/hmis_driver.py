@@ -423,7 +423,7 @@ class Driver:
         except Exception as e:
             print("Couldn't update Veteran Status")
             print(traceback.format_exc())
-            return False
+            # Don't return an error and quit, sometimes this field doesn't exist
 
         button_finish = self.browser.find_element(By.ID, button_finish_id)
         button_finish.click()
