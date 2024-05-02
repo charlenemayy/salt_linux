@@ -54,6 +54,8 @@ if report_filename not in files:
     print("RUNNING: Downloading SANFORD report from the SALT Web App")
     subprocess.run(["/usr/bin/python3 salt/run_daily_report.py -l \"SEM\" -d {0}".format(date_str)], shell=True)
     time.sleep(5)
+else: 
+    subprocess.run(["rm {0}".format(report_filename)], shell=True)
 
 # double check that report has been downloaded / exists
 report_path = output_path + report_filename
@@ -77,7 +79,7 @@ failed_report_path = output_path + failed_report_filename
 if not os.path.exists(failed_report_path):
     print("Failed entry report for SANFORD from SALT cannot be found, continuing data entry")
 else:
-    print("\nRUNNING: Automating failed SANFORD entries".format(run_count-1-i))
+    print("\nRUNNING: Automating failed SANFORD entries")
     subprocess.run(["/usr/bin/python3 salt/run_daily_data.py -l SEM -f {0} -a".format(failed_report_path)], shell=True)
 
     # upload final instance of the failed entry report to drive
