@@ -14,7 +14,8 @@ class DailyData:
     # Orlando Item Keys
     service_item_codes_orl = ['Shower', 'Laundry']
     clothing_item_codes_orl = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks', 'Belts']
-    grooming_item_codes_orl = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons', 'Bar Soap']
+    grooming_item_codes_orl = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons', 'Bar Soap', 
+                               'Deodorant', 'QTIPS', 'Hygiene Bag', 'Comb']
     food_item_codes_orl = ['SBG']
     bedding_item_codes_orl = ['Blankets']
 
@@ -25,7 +26,7 @@ class DailyData:
     grooming_item_codes_sem = ['Feminine pads', 'Hygiene Bag', 'Razors', 'Soap bars', 'Tampons', 'Toothbrush',
                            'Toothpaste', 'Deodorant']
     food_item_codes_sem = ['Snack', 'Water']
-    bedding_item_codes_sem = []
+    bedding_item_codes_sem = ['Tent', 'Blankets']
 
     # Locations
     location_codes = ["SEM", "ORL"]
@@ -95,15 +96,18 @@ class DailyData:
             if not isinstance(row['DoB'], float):
                 if isinstance(row['DoB'], datetime):
                     date = row['DoB'].strftime('%m-%d-%Y')
-                    print(date) 
                 else:
                     date = row['DoB']
 
                 day = date[0:3]
                 month = date[3:6]
                 client_dict['DoB'] = month + day + date[6:(len(date))]
-                # update sheet for readability
+                # # update sheet for readability
                 self.df.at[row_index, 'DoB'] = client_dict['DoB']
+                '''
+                client_dict['DoB'] = date
+                self.df.at[row_index, 'DoB'] = client_dict['DoB']
+                '''
 
             # get total number of services and items
             services_dict = self.__get_service_totals(row)
@@ -156,6 +160,10 @@ class DailyData:
         if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
             success = self.driver.search_client_by_ID(client_dict['Client ID'], client_dict['First Name'], client_dict['Last Name'])
         # Search by DoB
+        elif 'DoB' not in client_dict:
+            print("Neither birthday or ID in data, can't search for client:")
+            print(client_dict)
+            return
         elif not isinstance(client_dict['DoB'], float) and client_dict['DoB'] != "":
             success = self.driver.search_client_by_birthdate(client_dict['DoB'], client_dict['First Name'], client_dict['Last Name'])
         # Lack of Info

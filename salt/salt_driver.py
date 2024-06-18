@@ -107,7 +107,7 @@ class Driver:
         self.__wait_until_page_fully_loaded('SALT Homepage')
         if location == "ORL":
             download_url = "https://saltoutreachapp.com/dashboard/export"
-            time.sleep(8)
+            time.sleep(20)
         else:
             download_url = "https://sanford.saltoutreachapp.com/dashboard/export"
             time.sleep(3)
