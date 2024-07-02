@@ -15,7 +15,7 @@ class DailyData:
     service_item_codes_orl = ['Shower', 'Laundry']
     clothing_item_codes_orl = ['TOP', 'BTM', 'UND', 'SKS', 'SHO', 'BXR', 'Diabetic Socks', 'Backpacks', 'Belts']
     grooming_item_codes_orl = ['DDR', 'TBR', 'TPS', 'Razors', 'Adult Depends', 'Band Aid', 'Tampons', 'Bar Soap', 
-                               'Deodorant', 'QTIPS', 'Hygiene Bag', 'Comb']
+                               'Deodorant', 'QTIPS', 'Hygiene Bag', 'Comb', 'Nail Clippers', 'Q-tips']
     food_item_codes_orl = ['SBG']
     bedding_item_codes_orl = ['Blankets']
 
