@@ -821,6 +821,115 @@ class Driver:
             print("Couldn't click last assessment button")
             print(traceback.format_exc())
             return False
+    
+    # Mimics logic of 'update_date_of_engagement', 'navigate_to_edit_enrollment' and 'open_link_in_enrollment_action_menu'
+    #   for special case scenario: deleting date of engagement fields that are supposed to be empty, but 
+    #   are not. Developed to fix an error pointed out by the HMIS team in our data
+    # @return: [bool] success / fail
+    def delete_date_of_engagement(self):
+        label_enrollment_row_name_xpath = ('//table[@id="wp85039573formResultSet"]/tbody//td[6]')
+        links_enrollment_action_ids = {'Edit Enrollment': 'amb3',
+                                       'Edit Project Entry Workflow': 'amb4'}
+        menu_id = 'ActionMenu'
+        link_id = links_enrollment_action_ids['Edit Enrollment']
+
+        table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
+        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
+        field_assessment_xpath = '//table[@class="FormPage"]//td/span/input'
+        button_save_id = "Renderer_SAVE"
+
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Client Dashboard')
+
+        # STEP ONE: NAVIGATE TO EDIT ENROLLMENT PAGE
+        # check if client is enrolled in two SALT programs, if so skip over client and return true
+        # else click on the enrollment and open the row's action menu
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_element_located((By.XPATH, label_enrollment_row_name_xpath))
+            )
+            rows_enrollment_xpath = '//table[@id="wp85039573formResultSet"]/tbody/tr'
+            rows_enrollment = self.browser.find_elements(By.XPATH, rows_enrollment_xpath)
+            stored_row = None
+
+            for row in rows_enrollment:
+                # if row is a header (i.e. Active, Exited)
+                if row.get_attribute("class") == "gbHead":
+                    # prevent from clicking on an expired enrollment
+                    label = row.find_element(By.XPATH, './td/a')
+                    if label.get_attribute("data-value") == "Exited":
+                        break
+                # if row contains enrollment data
+                else:
+                    label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
+                    if label_enrollment_name.contains('SALT'):
+                        if stored_row:
+                            return True # skip over current client and return success
+                        stored_row = row
+            # For Loop End
+
+            menu_action = stored_row.find_element(By.CLASS_NAME, 'action-menu')
+            self.browser.execute_script("arguments[0].scrollIntoView();", menu_action)
+            time.sleep(1)
+            menu_action.click()
+
+        except Exception as e:
+            print("Couldn't open Enrollment Action Menu")
+            print(traceback.format_exc())
+            return False
+
+        # wait for action menu to appear
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_element_located((By.ID, menu_id))
+            )
+        except Exception as e:
+            print("Couldn't find Action Menu")
+            print(traceback.format_exc())
+            return False
+
+        # select the 'edit enrollment' link option from the action menu
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.ID, link_id))
+            )
+            link = self.browser.find_element(By.ID, link_id)
+            link.click()
+        except Exception as e:
+            print("Couldn't click link in Action Menu")
+            print(traceback.format_exc())
+            return False
+
+        # STEP TWO: CLEAR DATE OF ENGAGEMENT FIELD 
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
+            )
+            # check if the client has had any assessments done (required for update)
+            field_assessment = self.browser.find_elements(By.XPATH, field_assessment_xpath)[3]
+            if not field_assessment.get_attribute("value"):
+                return False
+            # find our current client among table of family members to update date of engagement
+            rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
+            for row in reversed(rows_family_members):
+                select_rel_to_head_of_household = row.find_elements(By.XPATH, './td/select')[0]
+                dropdown_rel_to_head_of_household = Select(select_rel_to_head_of_household)
+                rel_to_head_of_household = dropdown_rel_to_head_of_household.first_selected_option.text
+                if rel_to_head_of_household == "Self":
+                    field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
+                    WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
+                    time.sleep(1)
+                    self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
+                    time.sleep(1)
+                    field_date_of_engagement.click()
+                    time.sleep(1)
+                    field_date_of_engagement.clear()
+                    time.sleep(1)
+        except Exception as e:
+            print("Couldn't update Date of Engagement")
+            print(traceback.format_exc())
+            return False
+        return True
 
     # Updates the date of engagement field in the 'Edit Enrollment' page to be the date of service
     # @param: [list] viable_enrollment_list: list of favorable SALT enrollments, ordered from
@@ -834,10 +943,10 @@ class Driver:
         button_save_id = "Renderer_SAVE"
 
         self.__switch_to_iframe(self.iframe_id)
-        self.__wait_until_page_fully_loaded('Edit Enrollment')
+        self.__wait_until_page_fully_loaded('Client Dashboard')
 
-        if isinstance(self.navigate_to_edit_enrollment, Exception):
-            return False
+        # if isinstance(self.navigate_to_edit_enrollment, Exception):
+        #   return False
 
         # if the enrollment hasn't been found, enroll the client
         # once enrolled, the date of engagement will already be updated

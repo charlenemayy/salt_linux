@@ -29,6 +29,8 @@ class DateOfEngagement:
 
     # Clean and prepare data for automation and build client dicts
     def read_and_process_data(self):
+        self.__open_clienttrack()
+
         for row_index in range(0, len(self.df)):
             client_dict = {}
             row = self.df.iloc[row_index]
@@ -68,28 +70,17 @@ class DateOfEngagement:
             print(client_dict)
             return
 
-        # STEP TWO: CHECK IF CLIENT IS ENROLLED IN TWO PROGRAMS
-        # (IF SO, SKIP CLIENT)
+        # STEP TWO: DELETE CLIENT'S DATE OF ENGAGEMENT
         success = self.driver.delete_date_of_engagement() # look at 'update_date_of_engagement'
         if not success:
             print("Date of engagement could not be deleted for client:")
             print(client_dict)
             return # keep client on failed entry list and move on to next client
-        # remove client from list of failed entries
-        self.failed_df = self.failed_df.drop([row_index])
-        print("Success! " + str(len(self.failed_df.index)) + " entries remaining")
-        self.__export_failed_automation_data()
-        '''
-        in driver:
-            try:
-                if enrolled in two programs:
-                    return success
-
-                continue deletion logic
-                return success
-            except:
-                return fail
-        '''
+        else:
+            # remove client from list of failed entries
+            self.failed_df = self.failed_df.drop([row_index])
+            print("Success! " + str(len(self.failed_df.index)) + " entries remaining")
+            self.__export_failed_automation_data()
 
     # Export a sheet of the failed automated entries in their original format
     # This way we can keep looping the failed entries and try again
