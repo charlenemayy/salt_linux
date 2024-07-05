@@ -86,11 +86,6 @@ class DateOfEngagement:
     # This way we can keep looping the failed entries and try again
     def __export_failed_automation_data(self):
         # get date from original file and output into new excel sheet
-        date = self.__get_date_from_filename(self.filename)
-        output_name = (self.location + "_Failed_entries_" 
-                       + str(date.strftime('%m')) + '-' 
-                       + str(date.strftime('%d')) + '-' 
-                       + str(date.strftime('%Y')))
-
+        output_name = ("Failed_entries_" + self.filename)
         # create sheet for remaining clients that need to be entered and could not be automated
         self.failed_df.to_excel(self.output_path + output_name + ".xlsx", sheet_name = "Failed Entries Report - " + output_name)
