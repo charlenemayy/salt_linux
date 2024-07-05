@@ -422,7 +422,7 @@ class Driver:
             time.sleep(1)
         except Exception as e:
             print("Couldn't update Veteran Status, field not selected (sometimes doesn't exist)")
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             # Don't return an error and quit, sometimes this field doesn't exist
 
         button_finish = self.browser.find_element(By.ID, button_finish_id)
