@@ -833,6 +833,8 @@ class Driver:
         menu_id = 'ActionMenu'
         link_id = links_enrollment_action_ids['Edit Enrollment']
 
+        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
+        field_assessment_xpath = '//table[@class="FormPage"]//td/span/input'
         table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
         button_save_id = "Renderer_SAVE"
 
@@ -863,7 +865,7 @@ class Driver:
                     label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
                     if 'SALT' in label_enrollment_name:
                         if stored_row:
-                            print("theres two of them!")
+                            print("Enrolled in multiple SALT projects")
                             return True # skip over current client and return success
                         stored_row = row
             # For Loop End
@@ -910,11 +912,13 @@ class Driver:
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Edit Enrollment')
         try:
-            field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
-            WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
+            )
         except:
-            print("Date of Engagement field doesn't exist")
-            return True # sometimes this field is not there, just skip over client
+            print("Error loading Edit Enrollment page")
+            print(traceback.format_exc())
+            return False
 
         try:
             # find our current client among table of family members to update date of engagement
@@ -925,6 +929,7 @@ class Driver:
                 rel_to_head_of_household = dropdown_rel_to_head_of_household.first_selected_option.text
                 if rel_to_head_of_household == "Self":
                     field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
+                    WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
                     time.sleep(1)
                     self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
                     time.sleep(1)
@@ -935,9 +940,8 @@ class Driver:
                     button_save = self.browser.find_element(By.ID, button_save_id)
                     button_save.click()
         except Exception as e:
-            print("Couldn't update Date of Engagement")
-            print(traceback.format_exc())
-            return False
+            print("Date of Engagement field does not exist")
+            return True # sometimes the field does not exist for the user, I'm not sure why
         return True
 
     # Updates the date of engagement field in the 'Edit Enrollment' page to be the date of service
