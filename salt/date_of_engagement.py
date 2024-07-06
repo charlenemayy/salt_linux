@@ -1,9 +1,11 @@
 import pandas as pd
 import json
 import hmis_driver
+import os
 
 class DateOfEngagement:
     def __init__(self, filename):
+        self.filename = filename
         self.df = pd.read_excel(io=filename,
                              dtype={'clientid': object,
                                     'Name': object,
@@ -44,9 +46,9 @@ class DateOfEngagement:
             client_dict['Last Name'] = string_list[0]
 
             # add clientid to dict
-            client_dict['Client Id'] = row['clientid']
+            client_dict['Client ID'] = row['clientid']
 
-            self.__delete_date_of_engagement(client_dict)
+            self.__delete_date_of_engagement(client_dict, row_index)
 
     # Open and login to HMIS Clienttrack
     def __open_clienttrack(self):
@@ -58,6 +60,7 @@ class DateOfEngagement:
     
     def __delete_date_of_engagement(self, client_dict, row_index):
         # STEP ONE: SEARCH FOR CLIENT
+        print("\nNEW CLIENT: Deleting Date of Engagement for Client " + client_dict['First Name'] + ' ' + client_dict['Last Name'])
         if not isinstance(client_dict['Client ID'], float) and client_dict['Client ID'] != "":
             success = self.driver.search_client_by_ID(client_dict['Client ID'], client_dict['First Name'], client_dict['Last Name'])
         else:
@@ -79,13 +82,13 @@ class DateOfEngagement:
         else:
             # remove client from list of failed entries
             self.failed_df = self.failed_df.drop([row_index])
-            print("Success! " + str(len(self.failed_df.index)) + " entries remaining")
+            print("Success! " + str(len(self.failed_df.index)) + " entries remaining\n")
             self.__export_failed_automation_data()
 
     # Export a sheet of the failed automated entries in their original format
     # This way we can keep looping the failed entries and try again
     def __export_failed_automation_data(self):
         # get date from original file and output into new excel sheet
-        output_name = ("Failed_entries_" + self.filename)
+        output_name = ("Remaining_" + os.path.basename(self.filename))
         # create sheet for remaining clients that need to be entered and could not be automated
-        self.failed_df.to_excel(self.output_path + output_name + ".xlsx", sheet_name = "Failed Entries Report - " + output_name)
+        self.failed_df.to_excel(self.output_path + output_name, sheet_name = "Failed Entries Report - " + output_name)

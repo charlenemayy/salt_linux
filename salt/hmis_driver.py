@@ -834,12 +834,11 @@ class Driver:
         link_id = links_enrollment_action_ids['Edit Enrollment']
 
         table_row_family_members_xpath = '//table[@id="RendererSF1ResultSet"]//tbody/tr'
-        field_date_of_engagement_xpath = '//table[@id="RendererSF1ResultSet"]/tbody/tr/td/span/input'
-        field_assessment_xpath = '//table[@class="FormPage"]//td/span/input'
         button_save_id = "Renderer_SAVE"
 
         self.__switch_to_iframe(self.iframe_id)
         self.__wait_until_page_fully_loaded('Client Dashboard')
+
 
         # STEP ONE: NAVIGATE TO EDIT ENROLLMENT PAGE
         # check if client is enrolled in two SALT programs, if so skip over client and return true
@@ -862,11 +861,17 @@ class Driver:
                 # if row contains enrollment data
                 else:
                     label_enrollment_name = row.find_element(By.XPATH, './td[6]').text
-                    if label_enrollment_name.contains('SALT'):
+                    if 'SALT' in label_enrollment_name:
                         if stored_row:
+                            print("theres two of them!")
                             return True # skip over current client and return success
                         stored_row = row
             # For Loop End
+
+            # no valid SALT enrollments, has probably been exited from a program
+            if stored_row == None:
+                print("No valid SALT enrollment exists for client")
+                return True
 
             menu_action = stored_row.find_element(By.CLASS_NAME, 'action-menu')
             self.browser.execute_script("arguments[0].scrollIntoView();", menu_action)
@@ -901,14 +906,17 @@ class Driver:
             return False
 
         # STEP TWO: CLEAR DATE OF ENGAGEMENT FIELD 
+        # wait for Edit Enrollment page to be fully loaded
+        self.__switch_to_iframe(self.iframe_id)
+        self.__wait_until_page_fully_loaded('Edit Enrollment')
         try:
-            WebDriverWait(self.browser, self.wait_time).until(
-                EC.visibility_of_any_elements_located((By.XPATH, field_date_of_engagement_xpath))
-            )
-            # check if the client has had any assessments done (required for update)
-            field_assessment = self.browser.find_elements(By.XPATH, field_assessment_xpath)[3]
-            if not field_assessment.get_attribute("value"):
-                return False
+            field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
+            WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
+        except:
+            print("Date of Engagement field doesn't exist")
+            return True # sometimes this field is not there, just skip over client
+
+        try:
             # find our current client among table of family members to update date of engagement
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
             for row in reversed(rows_family_members):
@@ -917,7 +925,6 @@ class Driver:
                 rel_to_head_of_household = dropdown_rel_to_head_of_household.first_selected_option.text
                 if rel_to_head_of_household == "Self":
                     field_date_of_engagement = row.find_elements(By.XPATH, './td/span/input')[5]
-                    WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_date_of_engagement))
                     time.sleep(1)
                     self.browser.execute_script("arguments[0].scrollIntoView();", field_date_of_engagement)
                     time.sleep(1)
@@ -925,6 +932,8 @@ class Driver:
                     time.sleep(1)
                     field_date_of_engagement.clear()
                     time.sleep(1)
+                    button_save = self.browser.find_element(By.ID, button_save_id)
+                    button_save.click()
         except Exception as e:
             print("Couldn't update Date of Engagement")
             print(traceback.format_exc())
