@@ -371,7 +371,7 @@ class Driver:
     # @param: [str] service_date: date of service
     # @return: [bool] success / fail
     def enroll_client(self, service_date, location):
-        button_new_enrollment_id = "Renderer_1000000248"
+        button_new_enrollment_id = "Renderer_1000000424"
         dropdown_veteran_status_id = "1000006680_Renderer"
         option_data_not_collected_value = "99"
         button_finish_id = "Renderer_SAVE"
@@ -396,6 +396,7 @@ class Driver:
                 EC.element_to_be_clickable((By.ID, button_new_enrollment_id))
             )
             button_new_enrollment = self.browser.find_element(By.ID, button_new_enrollment_id)
+            print(button_new_enrollment)
             button_new_enrollment.click()
         except Exception as e:
             print("Couldn't click 'New Enrollment' button")
@@ -708,6 +709,7 @@ class Driver:
 
         self.__default_last_assessment(button_default_assessment_id)
         self.__wait_until_page_fully_loaded("Income Assessment")
+        # FIX HERE, HANGING TODO
 
         try:
             WebDriverWait(self.browser, self.wait_time).until(
@@ -818,9 +820,8 @@ class Driver:
             button_default_assessment.click()
             time.sleep(3)
         except Exception as e:
+            # sometimes this button doesn't exist, just skip over
             print("Couldn't click last assessment button")
-            print(traceback.format_exc())
-            return False
     
     # Mimics logic of 'update_date_of_engagement', 'navigate_to_edit_enrollment' and 'open_link_in_enrollment_action_menu'
     #   for special case scenario: deleting date of engagement fields that are supposed to be empty, but 
