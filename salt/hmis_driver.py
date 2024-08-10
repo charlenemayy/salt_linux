@@ -396,7 +396,6 @@ class Driver:
                 EC.element_to_be_clickable((By.ID, button_new_enrollment_id))
             )
             button_new_enrollment = self.browser.find_element(By.ID, button_new_enrollment_id)
-            print(button_new_enrollment)
             button_new_enrollment.click()
         except Exception as e:
             print("Couldn't click 'New Enrollment' button")
@@ -465,7 +464,7 @@ class Driver:
         # update household data for program enrollment and only enroll current client (not family members)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
-                EC.element_to_be_clickable((By.XPATH, dropdown_rel_to_head_of_household_xpath))
+                EC.presence_of_element_located((By.XPATH, dropdown_rel_to_head_of_household_xpath))
             )
             # if the household has multiple members, look for the current client to enroll
             rows_family_members = self.browser.find_elements(By.XPATH, table_row_family_members_xpath)
@@ -492,7 +491,7 @@ class Driver:
                 option_self = stored_row.find_element(By.XPATH, './/select//option[@value="SL"]')
                 option_self.click()
 
-                field_project_date = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[2]
+                field_project_date = stored_row.find_elements(By.XPATH, '//td/span[@class="DateField input-group"]/input')[2]
                 field_date_of_engagement = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[4]
 
             # needs to be scrolled into view if no additional family members
@@ -505,6 +504,8 @@ class Driver:
             field_project_date.click()
             time.sleep(1)
             field_project_date.clear()
+            time.sleep(3)
+            self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
             time.sleep(1)
             field_project_date.send_keys(service_date)
             time.sleep(1)
