@@ -490,16 +490,16 @@ class Driver:
 
                 option_self = stored_row.find_element(By.XPATH, './/select//option[@value="SL"]')
                 time.sleep(1)
-                self.browser.execute_script("arguments[0].scrollIntoView();", stored_row.find_element(By.XPATH,'.//select'))
+                self.browser.execute_script("arguments[0].scrollIntoView({block: 'end'});", stored_row.find_element(By.XPATH,'.//select'))
                 time.sleep(1)
                 option_self.click()
 
                 field_project_date = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[2]
                 field_date_of_engagement = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[4]
 
-            time.sleep(1)
-            self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
-            time.sleep(1)
+            time.sleep(2)
+            self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", field_project_date)
+            time.sleep(2)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_project_date))
             field_project_date.click()
             time.sleep(1)
@@ -509,6 +509,7 @@ class Driver:
             time.sleep(1)
             field_project_date.send_keys(service_date)
             time.sleep(1)
+
 
             '''
             # No longer updating date of engagement
