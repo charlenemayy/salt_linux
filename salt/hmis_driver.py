@@ -489,16 +489,16 @@ class Driver:
                         max_score = score
 
                 option_self = stored_row.find_element(By.XPATH, './/select//option[@value="SL"]')
+                time.sleep(1)
+                self.browser.execute_script("arguments[0].scrollIntoView();", stored_row.find_element(By.XPATH,'.//select'))
+                time.sleep(1)
                 option_self.click()
 
-                field_project_date = stored_row.find_elements(By.XPATH, '//td/span[@class="DateField input-group"]/input')[2]
+                field_project_date = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[2]
                 field_date_of_engagement = stored_row.find_elements(By.XPATH, './td/span[@class="DateField input-group"]/input')[4]
 
-            # needs to be scrolled into view if no additional family members
-            if len(rows_family_members) < 2:
-                time.sleep(1)
-                self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
-
+            time.sleep(1)
+            self.browser.execute_script("arguments[0].scrollIntoView();", field_project_date)
             time.sleep(1)
             WebDriverWait(self.browser, self.wait_time).until(EC.element_to_be_clickable(field_project_date))
             field_project_date.click()
