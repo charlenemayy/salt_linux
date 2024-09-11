@@ -1,9 +1,10 @@
-from selenium.webdriver import Firefox
-from selenium.webdriver import FirefoxProfile
-from selenium.webdriver.firefox.service import Service 
+from selenium.webdriver import Chrome
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
@@ -17,21 +18,15 @@ class Driver:
     wait_time = 3
 
     def __init__(self):
-        profile = FirefoxProfile(
-            '/Users/charlene/Library/Application Support/Firefox/Profiles/0sqyn9wo.default-release')
-        profile.set_preference("dom.webdriver.enabled", False)
-        profile.set_preference('useAutomationExtension', False)
-        profile.update_preferences()
         desired = DesiredCapabilities.FIREFOX
         
         firefox_options = Options()
-        firefox_options.profile = profile
         firefox_options.desired = desired
 
         # added for linux build
         firefox_options.add_argument("--headless")
 
-        self.browser = Firefox(options=firefox_options)
+        self.browser = webdriver.Firefox(options=firefox_options, service=FirefoxService(GeckoDriverManager.install()))
 
     def open_saltwebapp(self, location):
         if location == "ORL": 
