@@ -9,3 +9,4 @@ package-lock.json
 package.json
 saltoutreachdata/
 salt/__pycache__/
+path/
