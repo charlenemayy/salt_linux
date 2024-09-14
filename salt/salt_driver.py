@@ -34,6 +34,22 @@ class Driver:
         else:
             self.browser.get('https://sanford.saltoutreachapp.com/')
 
+    def login_saltwebapp_native(self, username, password):
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.element_to_be_clickable((By.XPATH, '//input[@type="email"]'))
+            )
+            field_username = self.browser.find_element(By.XPATH, '//input[@type="email"]')
+            field_password = self.browser.find_element(By.XPATH, '//input[@type="password"]')
+
+            field_username.send_keys(username)
+            field_password.send_keys(password)
+            field_password.send_keys(Keys.RETURN)
+        except Exception as e:
+            print("Couldn't login with SALT username and password")
+            print(e)
+            return False
+
 
     def login_saltwebapp_google(self, username, password):
         try:
