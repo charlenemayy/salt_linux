@@ -1,10 +1,10 @@
-from selenium.webdriver import Chrome
+from selenium.webdriver import Firefox
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
@@ -26,7 +26,7 @@ class Driver:
         # added for linux build
         firefox_options.add_argument("--headless")
 
-        self.browser = webdriver.Firefox(options=firefox_options, service=FirefoxService(GeckoDriverManager.install()))
+        self.browser = webdriver.Firefox(options=firefox_options, service=FirefoxService(GeckoDriverManager().install()))
 
     def open_saltwebapp(self, location):
         if location == "ORL": 
@@ -74,7 +74,10 @@ class Driver:
 
         # wait for salt page to be loaded and ready
         self.__wait_until_page_fully_loaded('SALT Homepage')
-        time.sleep(10)
+        time.sleep(3)
+        self.browser.save_screenshot('screenshot.png')
+        print("SAVED SCREENSHOT")
+        time.sleep(40)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_element_located((By.ID, 'navbar'))
