@@ -50,6 +50,19 @@ class Driver:
             print(e)
             return False
 
+        # wait for salt page to be loaded and ready
+        self.__wait_until_page_fully_loaded('SALT Homepage')
+        time.sleep(3)
+        try:
+            WebDriverWait(self.browser, self.wait_time).until(
+                EC.visibility_of_element_located((By.ID, 'navbar'))
+            )
+        except Exception as e:
+            print("Login didn't navigate back to SALT web app")
+            print(e)
+            return False
+        return True
+
 
     def login_saltwebapp_google(self, username, password):
         try:
@@ -91,9 +104,6 @@ class Driver:
         # wait for salt page to be loaded and ready
         self.__wait_until_page_fully_loaded('SALT Homepage')
         time.sleep(3)
-        self.browser.save_screenshot('screenshot.png')
-        print("SAVED SCREENSHOT")
-        time.sleep(40)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_element_located((By.ID, 'navbar'))
