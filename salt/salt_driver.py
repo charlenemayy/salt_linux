@@ -45,6 +45,7 @@ class Driver:
             field_username.send_keys(username)
             field_password.send_keys(password)
             field_password.send_keys(Keys.RETURN)
+            time.sleep(3)
         except Exception as e:
             print("Couldn't login with SALT username and password")
             print(e)
@@ -52,7 +53,7 @@ class Driver:
 
         # wait for salt page to be loaded and ready
         self.__wait_until_page_fully_loaded('SALT Homepage')
-        time.sleep(3)
+        time.sleep(10)
         try:
             WebDriverWait(self.browser, self.wait_time).until(
                 EC.visibility_of_element_located((By.ID, 'navbar'))
